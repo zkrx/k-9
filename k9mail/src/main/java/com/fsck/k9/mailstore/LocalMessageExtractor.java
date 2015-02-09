@@ -448,18 +448,20 @@ public class LocalMessageExtractor {
                     attachments);
             List<AttachmentViewInfo> attachmentInfos = extractAttachmentInfos(context, attachments);
 
-            if (pgpAnnotation != NO_ANNOTATIONS) {
+            MessageViewContainer messageViewContainer;
+            if (pgpAnnotation == NO_ANNOTATIONS) {
+                messageViewContainer = new MessageViewContainer(viewable.html, part, attachmentInfos);
+            } else {
                 OpenPgpSignatureResult pgpResult = pgpAnnotation.getSignatureResult();
                 OpenPgpError pgpError = pgpAnnotation.getError();
                 boolean wasEncrypted = pgpAnnotation.wasEncrypted();
                 PendingIntent pendingIntent = pgpAnnotation.getPendingIntent();
 
-                containers.add(new MessageViewContainer(
-                        viewable.html, attachmentInfos, pgpResult, pgpError, wasEncrypted, pendingIntent));
-            } else {
-                containers.add(new MessageViewContainer(viewable.html, attachmentInfos));
+                messageViewContainer = new MessageViewContainer(viewable.html, part, attachmentInfos, pgpResult,
+                        pgpError, wasEncrypted, pendingIntent);
             }
 
+            containers.add(messageViewContainer);
         }
 
         return new MessageViewInfo(containers, message);
@@ -517,7 +519,7 @@ public class LocalMessageExtractor {
         return attachments;
     }
 
-    private static AttachmentViewInfo extractAttachmentInfo(Context context, Part part) throws MessagingException {
+    public static AttachmentViewInfo extractAttachmentInfo(Context context, Part part) throws MessagingException {
         if (part instanceof LocalPart) {
             LocalPart localPart = (LocalPart) part;
             String accountUuid = localPart.getAccountUuid();
