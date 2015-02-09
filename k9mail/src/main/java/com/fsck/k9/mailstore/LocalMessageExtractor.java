@@ -475,7 +475,6 @@ public class LocalMessageExtractor {
          * not contain children of the former types.
          */
 
-
         ArrayList<Part> parts = new ArrayList<Part>();
         if (!getCryptSubPieces(message, parts, annotations)) {
             parts.add(message);

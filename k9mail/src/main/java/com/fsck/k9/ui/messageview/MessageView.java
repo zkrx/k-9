@@ -18,6 +18,7 @@ import com.fsck.k9.mail.Message;
 import com.fsck.k9.mail.MessagingException;
 import com.fsck.k9.mailstore.MessageViewInfo;
 import com.fsck.k9.mailstore.MessageViewInfo.MessageViewContainer;
+import com.fsck.k9.ui.messageview.MessageCryptoHelper.MessageCryptoAnnotations;
 import com.fsck.k9.view.MessageHeader;
 
 
@@ -84,12 +85,17 @@ public class MessageView extends LinearLayout {
         return mHeaderContainer;
     }
 
-    public void setHeaders(final Message message, Account account) {
+    /** This method is called twice: Once before the message is loaded,
+     * showing all available information at the time and an indeterminate
+     * progress bar. Once loading of the message has finished, the
+     * information is updated by another call with the loading flag set
+     * to false.
+     */
+    public void setHeaders(final Message message, Account account, MessageCryptoAnnotations annotations) {
         try {
-            mHeaderContainer.populate(message, account);
+            mHeaderContainer.populate(message, account, annotations == null,
+                    annotations == null ? null : annotations.getPrincipalResultForSender(null));
             mHeaderContainer.setVisibility(View.VISIBLE);
-
-
         } catch (Exception me) {
             Log.e(K9.LOG_TAG, "setHeaders - error", me);
         }

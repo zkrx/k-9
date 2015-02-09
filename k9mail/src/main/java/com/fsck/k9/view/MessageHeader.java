@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Set;
 
 import android.content.Context;
+import android.graphics.PorterDuff;
 import android.graphics.Typeface;
 import android.os.Parcel;
 import android.os.Parcelable;
@@ -20,7 +21,9 @@ import android.view.Gravity;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.CheckBox;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.QuickContactBadge;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -38,6 +41,10 @@ import com.fsck.k9.mail.Flag;
 import com.fsck.k9.mail.Message;
 import com.fsck.k9.mail.MessagingException;
 import com.fsck.k9.mail.internet.MimeUtility;
+import com.fsck.k9.mailstore.OpenPgpResultAnnotation;
+import com.fsck.k9.ui.messageview.MessageCryptoHelper.MessageCryptoAnnotations;
+import org.openintents.openpgp.OpenPgpSignatureResult;
+
 
 public class MessageHeader extends LinearLayout implements OnClickListener {
     private Context mContext;
@@ -49,6 +56,9 @@ public class MessageHeader extends LinearLayout implements OnClickListener {
     private TextView mCcLabel;
     private TextView mSubjectView;
 
+    private ProgressBar mProgress;
+    private ImageView mPgpSignatureIcon;
+    private ImageView mPgpEncryptedIcon;
     private View mChip;
     private CheckBox mFlagged;
     private int defaultSubjectColor;
@@ -89,6 +99,9 @@ public class MessageHeader extends LinearLayout implements OnClickListener {
 
     @Override
     protected void onFinishInflate() {
+
+        mProgress = (ProgressBar) findViewById(R.id.progress);
+
         mAnsweredIcon = findViewById(R.id.answered);
         mForwardedIcon = findViewById(R.id.forwarded);
         mFromView = (TextView) findViewById(R.id.from);
@@ -96,6 +109,9 @@ public class MessageHeader extends LinearLayout implements OnClickListener {
         mToLabel = (TextView) findViewById(R.id.to_label);
         mCcView = (TextView) findViewById(R.id.cc);
         mCcLabel = (TextView) findViewById(R.id.cc_label);
+
+        mPgpSignatureIcon = (ImageView) findViewById(R.id.pgp_signature_icon);
+        mPgpEncryptedIcon= (ImageView) findViewById(R.id.pgp_encryption_icon);
 
         mContactBadge = (QuickContactBadge) findViewById(R.id.contact_badge);
 
@@ -213,7 +229,9 @@ public class MessageHeader extends LinearLayout implements OnClickListener {
 
     }
 
-    public void populate(final Message message, final Account account) throws MessagingException {
+    public void populate(final Message message, final Account account,
+            boolean loading, OpenPgpResultAnnotation pgpResult)
+            throws MessagingException {
         final Contacts contacts = K9.showContactName() ? mContacts : null;
         final CharSequence from = MessageHelper.toFriendly(message.getFrom(), contacts);
         final CharSequence to = MessageHelper.toFriendly(message.getRecipients(Message.RecipientType.TO), contacts);
@@ -291,6 +309,29 @@ public class MessageHeader extends LinearLayout implements OnClickListener {
 
         mChip.setBackgroundColor(mAccount.getChipColor());
 
+        // if this is null, it's still loading
+        if (loading) {
+            mProgress.setVisibility(View.VISIBLE);
+            mPgpSignatureIcon.setVisibility(View.GONE);
+            mPgpEncryptedIcon.setVisibility(View.GONE);
+        } else if (pgpResult == null) {
+            mProgress.setVisibility(View.GONE);
+            mPgpSignatureIcon.setVisibility(View.GONE);
+            mPgpEncryptedIcon.setVisibility(View.GONE);
+
+            mPgpSignatureIcon.setImageResource(R.drawable.status_signature_unverified_cutout);
+            int color = R.color.openpgp_sidebar;
+            mPgpSignatureIcon.setColorFilter(mContext.getResources().getColor(color),
+                    PorterDuff.Mode.SRC_IN);
+
+        } else {
+            mProgress.setVisibility(View.GONE);
+            mPgpSignatureIcon.setVisibility(View.VISIBLE);
+            mPgpEncryptedIcon.setVisibility(View.VISIBLE);
+
+            setPgpStatus(pgpResult);
+        }
+
         setVisibility(View.VISIBLE);
 
         if (mSavedState != null) {
@@ -300,6 +341,173 @@ public class MessageHeader extends LinearLayout implements OnClickListener {
             mSavedState = null;
         } else {
             hideAdditionalHeaders();
+        }
+    }
+
+    private void setPgpStatus(OpenPgpResultAnnotation pgpResult) {
+
+        OpenPgpSignatureResult signatureResult = pgpResult.getSignatureResult();
+
+        if (signatureResult == null) {
+            setStatusImage(mContext, mPgpSignatureIcon, STATE_NOT_SIGNED);
+        } else {
+            switch (signatureResult.getStatus()) {
+                case OpenPgpSignatureResult.SIGNATURE_ERROR: {
+                    setStatusImage(mContext, mPgpSignatureIcon, STATE_INVALID);
+
+                    break;
+                }
+                case OpenPgpSignatureResult.SIGNATURE_SUCCESS_CERTIFIED: {
+                    setStatusImage(mContext, mPgpSignatureIcon, STATE_VERIFIED);
+
+                    break;
+                }
+                case OpenPgpSignatureResult.SIGNATURE_KEY_MISSING: {
+                    setStatusImage(mContext, mPgpSignatureIcon, STATE_UNKNOWN_KEY);
+
+                    break;
+                }
+                case OpenPgpSignatureResult.SIGNATURE_SUCCESS_UNCERTIFIED: {
+                    setStatusImage(mContext, mPgpSignatureIcon, STATE_UNVERIFIED);
+
+                    break;
+                }
+                case OpenPgpSignatureResult.SIGNATURE_KEY_EXPIRED: {
+                    setStatusImage(mContext, mPgpSignatureIcon, STATE_EXPIRED);
+
+                    break;
+                }
+                case OpenPgpSignatureResult.SIGNATURE_KEY_REVOKED: {
+                    setStatusImage(mContext, mPgpSignatureIcon, STATE_REVOKED);
+
+                    break;
+                }
+            }
+
+
+        }
+    }
+
+    public static final int STATE_REVOKED = 1;
+    public static final int STATE_EXPIRED = 2;
+    public static final int STATE_VERIFIED = 3;
+    public static final int STATE_UNAVAILABLE = 4;
+    public static final int STATE_ENCRYPTED = 5;
+    public static final int STATE_NOT_ENCRYPTED = 6;
+    public static final int STATE_UNVERIFIED = 7;
+    public static final int STATE_UNKNOWN_KEY = 8;
+    public static final int STATE_INVALID = 9;
+    public static final int STATE_NOT_SIGNED = 10;
+
+    public static void setStatusImage(Context context, ImageView statusIcon, int state) {
+        setStatusImage(context, statusIcon, null, state);
+    }
+
+    public static void setStatusImage(Context context, ImageView statusIcon, TextView statusText,
+            int state) {
+        switch (state) {
+            /** GREEN: everything is good **/
+            case STATE_VERIFIED: {
+                statusIcon.setImageDrawable(
+                        context.getResources().getDrawable(R.drawable.status_signature_verified_cutout));
+                int color = R.color.openpgp_green;
+                statusIcon.setColorFilter(context.getResources().getColor(color),
+                        PorterDuff.Mode.SRC_IN);
+                if (statusText != null) {
+                    statusText.setTextColor(context.getResources().getColor(color));
+                }
+                break;
+            }
+            case STATE_ENCRYPTED: {
+                statusIcon.setImageDrawable(
+                        context.getResources().getDrawable(R.drawable.status_lock_closed));
+                int color = R.color.openpgp_green;
+                statusIcon.setColorFilter(context.getResources().getColor(color),
+                        PorterDuff.Mode.SRC_IN);
+                if (statusText != null) {
+                    statusText.setTextColor(context.getResources().getColor(color));
+                }
+                break;
+            }
+            /** ORANGE: mostly bad... **/
+            case STATE_UNVERIFIED: {
+                statusIcon.setImageDrawable(
+                        context.getResources().getDrawable(R.drawable.status_signature_unverified_cutout));
+                int color = R.color.openpgp_orange;
+                statusIcon.setColorFilter(context.getResources().getColor(color),
+                        PorterDuff.Mode.SRC_IN);
+                if (statusText != null) {
+                    statusText.setTextColor(context.getResources().getColor(color));
+                }
+                break;
+            }
+            case STATE_UNKNOWN_KEY: {
+                statusIcon.setImageDrawable(
+                        context.getResources().getDrawable(R.drawable.status_signature_unknown_cutout));
+                int color = R.color.openpgp_orange;
+                statusIcon.setColorFilter(context.getResources().getColor(color),
+                        PorterDuff.Mode.SRC_IN);
+                if (statusText != null) {
+                    statusText.setTextColor(context.getResources().getColor(color));
+                }
+                break;
+            }
+            /** RED: really bad... **/
+            case STATE_REVOKED: {
+                statusIcon.setImageDrawable(
+                        context.getResources().getDrawable(R.drawable.status_signature_revoked_cutout));
+                int color = R.color.openpgp_red;
+                statusIcon.setColorFilter(context.getResources().getColor(color),
+                        PorterDuff.Mode.SRC_IN);
+                if (statusText != null) {
+                    statusText.setTextColor(context.getResources().getColor(color));
+                }
+                break;
+            }
+            case STATE_EXPIRED: {
+                statusIcon.setImageDrawable(
+                        context.getResources().getDrawable(R.drawable.status_signature_expired_cutout));
+                int color = R.color.openpgp_red;
+                statusIcon.setColorFilter(context.getResources().getColor(color),
+                        PorterDuff.Mode.SRC_IN);
+                if (statusText != null) {
+                    statusText.setTextColor(context.getResources().getColor(color));
+                }
+                break;
+            }
+            case STATE_NOT_ENCRYPTED: {
+                statusIcon.setImageDrawable(
+                        context.getResources().getDrawable(R.drawable.status_lock_open));
+                int color = R.color.openpgp_red;
+                statusIcon.setColorFilter(context.getResources().getColor(color),
+                        PorterDuff.Mode.SRC_IN);
+                if (statusText != null) {
+                    statusText.setTextColor(context.getResources().getColor(color));
+                }
+                break;
+            }
+            case STATE_NOT_SIGNED: {
+                statusIcon.setImageDrawable(
+                        context.getResources().getDrawable(R.drawable.status_signature_unknown_cutout));
+                int color = R.color.openpgp_red;
+                statusIcon.setColorFilter(context.getResources().getColor(color),
+                        PorterDuff.Mode.SRC_IN);
+                if (statusText != null) {
+                    statusText.setTextColor(context.getResources().getColor(color));
+                }
+                break;
+            }
+            case STATE_INVALID: {
+                statusIcon.setImageDrawable(
+                        context.getResources().getDrawable(R.drawable.status_signature_invalid_cutout));
+                int color = R.color.openpgp_red;
+                statusIcon.setColorFilter(context.getResources().getColor(color),
+                        PorterDuff.Mode.SRC_IN);
+                if (statusText != null) {
+                    statusText.setTextColor(context.getResources().getColor(color));
+                }
+                break;
+            }
         }
     }
 

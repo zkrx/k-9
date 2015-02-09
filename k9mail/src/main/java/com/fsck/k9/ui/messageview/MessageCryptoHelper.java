@@ -427,6 +427,10 @@ public class MessageCryptoHelper {
             return annotations.containsKey(part);
         }
 
+        public OpenPgpResultAnnotation getPrincipalResultForSender(String sender) {
+            return annotations.isEmpty() ? null : annotations.values().iterator().next();
+        }
+
     }
 
 }

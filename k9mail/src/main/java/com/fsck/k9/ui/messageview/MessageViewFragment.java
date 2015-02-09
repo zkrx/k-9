@@ -35,7 +35,6 @@ import com.fsck.k9.activity.ChooseFolder;
 import com.fsck.k9.activity.MessageReference;
 import com.fsck.k9.controller.MessagingController;
 import com.fsck.k9.controller.MessagingListener;
-import com.fsck.k9.crypto.PgpData;
 import com.fsck.k9.fragment.ConfirmationDialogFragment;
 import com.fsck.k9.fragment.ConfirmationDialogFragment.ConfirmationDialogFragmentListener;
 import com.fsck.k9.fragment.ProgressDialogFragment;
@@ -57,7 +56,6 @@ public class MessageViewFragment extends Fragment implements ConfirmationDialogF
     private static final String ARG_REFERENCE = "reference";
 
     private static final String STATE_MESSAGE_REFERENCE = "reference";
-    private static final String STATE_PGP_DATA = "pgpData";
 
     private static final int ACTIVITY_CHOOSE_FOLDER_MOVE = 1;
     private static final int ACTIVITY_CHOOSE_FOLDER_COPY = 2;
@@ -77,7 +75,6 @@ public class MessageViewFragment extends Fragment implements ConfirmationDialogF
     }
 
     private MessageView mMessageView;
-    private PgpData mPgpData;
     private Account mAccount;
     private MessageReference mMessageReference;
     private LocalMessage mMessage;
@@ -172,24 +169,22 @@ public class MessageViewFragment extends Fragment implements ConfirmationDialogF
 
         MessageReference messageReference;
         if (savedInstanceState != null) {
-            mPgpData = (PgpData) savedInstanceState.get(STATE_PGP_DATA);
             messageReference = (MessageReference) savedInstanceState.get(STATE_MESSAGE_REFERENCE);
         } else {
             Bundle args = getArguments();
             messageReference = args.getParcelable(ARG_REFERENCE);
         }
 
-        displayMessage(messageReference, (mPgpData == null));
+        displayMessage(messageReference);
     }
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putParcelable(STATE_MESSAGE_REFERENCE, mMessageReference);
-        outState.putSerializable(STATE_PGP_DATA, mPgpData);
     }
 
-    private void displayMessage(MessageReference ref, boolean resetPgpData) {
+    private void displayMessage(MessageReference ref) {
         mMessageReference = ref;
         if (K9.DEBUG) {
             Log.d(K9.LOG_TAG, "MessageView displaying message " + mMessageReference);
@@ -198,11 +193,6 @@ public class MessageViewFragment extends Fragment implements ConfirmationDialogF
         Context appContext = getActivity().getApplicationContext();
         mAccount = Preferences.getPreferences(appContext).getAccount(mMessageReference.accountUuid);
         messageCryptoHelper = new MessageCryptoHelper(mContext, this, mAccount);
-
-        if (resetPgpData) {
-            // start with fresh, empty PGP data
-            mPgpData = new PgpData();
-        }
 
         // Clear previous message
         mMessageView.resetView();
@@ -222,7 +212,7 @@ public class MessageViewFragment extends Fragment implements ConfirmationDialogF
     }
 
     private void onLoadMessageFromDatabaseFinished(LocalMessage message) {
-        displayMessageHeader(message);
+        displayMessageHeader(message, null);
 
         if (message.isBodyMissing()) {
             startDownloadingMessageBody(message);
@@ -262,6 +252,7 @@ public class MessageViewFragment extends Fragment implements ConfirmationDialogF
 
     void startExtractingTextAndAttachments(MessageCryptoAnnotations annotations) {
         this.messageAnnotations = annotations;
+        displayMessageHeader(mMessage, messageAnnotations);
         getLoaderManager().initLoader(DECODE_MESSAGE_LOADER_ID, null, decodeMessageLoaderCallback);
     }
 
@@ -279,8 +270,8 @@ public class MessageViewFragment extends Fragment implements ConfirmationDialogF
         }
     }
 
-    private void displayMessageHeader(LocalMessage message) {
-        mMessageView.setHeaders(message, mAccount);
+    private void displayMessageHeader(LocalMessage message, MessageCryptoAnnotations annotations) {
+        mMessageView.setHeaders(message, mAccount, annotations);
         displayMessageSubject(getSubjectForMessage(message));
         mFragmentListener.updateMenu();
     }
@@ -344,21 +335,22 @@ public class MessageViewFragment extends Fragment implements ConfirmationDialogF
         mController.moveMessage(mAccount, srcFolder, messageToMove, dstFolder, null);
     }
 
+    // TODO useful citation
     public void onReply() {
         if (mMessage != null) {
-            mFragmentListener.onReply(mMessage, mPgpData);
+            mFragmentListener.onReply(mMessage, "");
         }
     }
 
     public void onReplyAll() {
         if (mMessage != null) {
-            mFragmentListener.onReplyAll(mMessage, mPgpData);
+            mFragmentListener.onReplyAll(mMessage, "");
         }
     }
 
     public void onForward() {
         if (mMessage != null) {
-            mFragmentListener.onForward(mMessage, mPgpData);
+            mFragmentListener.onForward(mMessage, "");
         }
     }
 
@@ -367,7 +359,7 @@ public class MessageViewFragment extends Fragment implements ConfirmationDialogF
             boolean newState = !mMessage.isSet(Flag.FLAGGED);
             mController.setFlag(mAccount, mMessage.getFolder().getName(),
                     Collections.singletonList(mMessage), Flag.FLAGGED, newState);
-            mMessageView.setHeaders(mMessage, mAccount);
+            mMessageView.setHeaders(mMessage, mAccount, messageAnnotations);
         }
     }
 
@@ -479,7 +471,7 @@ public class MessageViewFragment extends Fragment implements ConfirmationDialogF
         if (mMessage != null) {
             mController.setFlag(mAccount, mMessage.getFolder().getName(),
                     Collections.singletonList(mMessage), Flag.SEEN, !mMessage.isSet(Flag.SEEN));
-            mMessageView.setHeaders(mMessage, mAccount);
+            mMessageView.setHeaders(mMessage, mAccount, messageAnnotations);
             String subject = mMessage.getSubject();
             displayMessageSubject(subject);
             mFragmentListener.updateMenu();
@@ -698,10 +690,10 @@ public class MessageViewFragment extends Fragment implements ConfirmationDialogF
     }
 
     public interface MessageViewFragmentListener {
-        public void onForward(LocalMessage mMessage, PgpData mPgpData);
+        public void onForward(LocalMessage mMessage, String citation);
         public void disableDeleteAction();
-        public void onReplyAll(LocalMessage mMessage, PgpData mPgpData);
-        public void onReply(LocalMessage mMessage, PgpData mPgpData);
+        public void onReplyAll(LocalMessage mMessage, String citation);
+        public void onReply(LocalMessage mMessage, String citation);
         public void displayMessageSubject(String title);
         public void setProgress(boolean b);
         public void showNextMessageOrReturn();

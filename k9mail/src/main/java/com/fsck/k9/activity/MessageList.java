@@ -40,6 +40,7 @@ import com.fsck.k9.activity.setup.Prefs;
 import com.fsck.k9.crypto.PgpData;
 import com.fsck.k9.fragment.MessageListFragment;
 import com.fsck.k9.fragment.MessageListFragment.MessageListFragmentListener;
+import com.fsck.k9.ui.messageview.MessageCryptoHelper.MessageCryptoAnnotations;
 import com.fsck.k9.ui.messageview.MessageViewFragment;
 import com.fsck.k9.ui.messageview.MessageViewFragment.MessageViewFragmentListener;
 import com.fsck.k9.mailstore.StorageManager;
@@ -1400,18 +1401,18 @@ public class MessageList extends K9Activity implements MessageListFragmentListen
     }
 
     @Override
-    public void onReply(LocalMessage message, PgpData pgpData) {
-        MessageCompose.actionReply(this, message, false, pgpData.getDecryptedData());
+    public void onReply(LocalMessage message, String quote) {
+        MessageCompose.actionReply(this, message, false, quote);
     }
 
     @Override
-    public void onReplyAll(LocalMessage message, PgpData pgpData) {
-        MessageCompose.actionReply(this, message, true, pgpData.getDecryptedData());
+    public void onReplyAll(LocalMessage message, String quote) {
+        MessageCompose.actionReply(this, message, true, quote);
     }
 
     @Override
-    public void onForward(LocalMessage mMessage, PgpData mPgpData) {
-        MessageCompose.actionForward(this, mMessage, mPgpData.getDecryptedData());
+    public void onForward(LocalMessage mMessage, String quote) {
+        MessageCompose.actionForward(this, mMessage, quote);
     }
 
     @Override
