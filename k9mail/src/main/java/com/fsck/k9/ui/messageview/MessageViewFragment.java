@@ -76,7 +76,7 @@ public class MessageViewFragment extends Fragment implements ConfirmationDialogF
         return fragment;
     }
 
-    private MessageTopView mMessageView;
+    private MessageView mMessageView;
     private PgpData mPgpData;
     private Account mAccount;
     private MessageReference mMessageReference;
@@ -144,7 +144,7 @@ public class MessageViewFragment extends Fragment implements ConfirmationDialogF
         View view = mLayoutInflater.inflate(R.layout.message, container, false);
 
 
-        mMessageView = (MessageTopView) view.findViewById(R.id.message_view);
+        mMessageView = (MessageView) view.findViewById(R.id.message_view);
 
         mMessageView.initialize(this, this, this);
         mMessageView.setOnToggleFlagClickListener(new OnClickListener() {
@@ -232,7 +232,7 @@ public class MessageViewFragment extends Fragment implements ConfirmationDialogF
     }
 
     private void onLoadMessageFromDatabaseFailed() {
-        // mMessageView.showStatusMessage(mContext.getString(R.string.status_invalid_id_error));
+        mMessageView.showStatusMessage(mContext.getString(R.string.status_invalid_id_error));
     }
 
     private void startDownloadingMessageBody(LocalMessage message) {

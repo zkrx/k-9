@@ -1,6 +1,5 @@
 package com.fsck.k9.ui.messageview;
 
-import android.app.Activity;
 import android.app.Fragment;
 import android.content.Context;
 import android.util.AttributeSet;
@@ -14,7 +13,6 @@ import android.widget.LinearLayout;
 import com.fsck.k9.Account;
 import com.fsck.k9.K9;
 import com.fsck.k9.R;
-import com.fsck.k9.crypto.PgpData;
 import com.fsck.k9.mail.Flag;
 import com.fsck.k9.mail.Message;
 import com.fsck.k9.mail.MessagingException;
@@ -23,7 +21,7 @@ import com.fsck.k9.mailstore.MessageViewInfo.MessageViewContainer;
 import com.fsck.k9.view.MessageHeader;
 
 
-public class MessageTopView extends LinearLayout {
+public class MessageView extends LinearLayout {
 
     private MessageHeader mHeaderContainer;
     private LayoutInflater mInflater;
@@ -33,7 +31,7 @@ public class MessageTopView extends LinearLayout {
     private AttachmentViewCallback attachmentCallback;
     private OpenPgpHeaderViewCallback openPgpHeaderViewCallback;
 
-    public MessageTopView(Context context, AttributeSet attrs) {
+    public MessageView(Context context, AttributeSet attrs) {
         super(context, attrs);
     }
 
@@ -132,6 +130,10 @@ public class MessageTopView extends LinearLayout {
             mDownloadRemainder.setEnabled(true);
             mDownloadRemainder.setVisibility(View.VISIBLE);
         }
+    }
+
+    public void showStatusMessage(String string) {
+
     }
 
 }
