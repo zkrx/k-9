@@ -181,6 +181,7 @@ public class LocalStore extends Store {
 
     private final Context context;
     private final ContentResolver contentResolver;
+
     private final MessagePreviewCreator messagePreviewCreator;
     private final MessageFulltextCreator messageFulltextCreator;
     private final AttachmentCounter attachmentCounter;
@@ -956,17 +957,14 @@ public class LocalStore extends Store {
         List<Flag> extraFlags = new ArrayList<>();
 
         for (Flag flag : flags) {
-            switch (flag) {
-                case DELETED:
-                case SEEN:
-                case FLAGGED:
-                case ANSWERED:
-                case FORWARDED: {
-                    break;
-                }
-                default: {
-                    extraFlags.add(flag);
-                }
+            if (flag == Flag.DELETED ||
+                    flag == Flag.SEEN ||
+                    flag == Flag.FLAGGED ||
+                    flag == Flag.ANSWERED ||
+                    flag == Flag.FORWARDED) {
+                break;
+            } else {
+                extraFlags.add(flag);
             }
         }
 
@@ -1289,22 +1287,16 @@ public class LocalStore extends Store {
     }
 
     public static String getColumnNameForFlag(Flag flag) {
-        switch (flag) {
-            case SEEN: {
-                return MessageColumns.READ;
-            }
-            case FLAGGED: {
-                return MessageColumns.FLAGGED;
-            }
-            case ANSWERED: {
-                return MessageColumns.ANSWERED;
-            }
-            case FORWARDED: {
-                return MessageColumns.FORWARDED;
-            }
-            default: {
-                throw new IllegalArgumentException("Flag must be a special column flag");
-            }
+        if (flag == Flag.SEEN) {
+            return MessageColumns.READ;
+        } else if (flag == Flag.FLAGGED) {
+            return MessageColumns.FLAGGED;
+        } else if (flag == Flag.ANSWERED) {
+            return MessageColumns.ANSWERED;
+        } else if (flag == Flag.FORWARDED) {
+            return MessageColumns.FORWARDED;
+        } else {
+            throw new IllegalArgumentException("Flag must be a special column flag");
         }
     }
 }
