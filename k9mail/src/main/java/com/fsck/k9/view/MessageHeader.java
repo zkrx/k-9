@@ -57,6 +57,8 @@ public class MessageHeader extends LinearLayout implements OnClickListener, OnLo
     private TextView mCcLabel;
     private TextView mBccView;
     private TextView mBccLabel;
+    private TextView mTagsView;
+    private TextView mTagsLabel;
     private TextView mSubjectView;
     private MessageCryptoStatusView mCryptoStatusIcon;
 
@@ -113,6 +115,8 @@ public class MessageHeader extends LinearLayout implements OnClickListener, OnLo
         mCcLabel = (TextView) findViewById(R.id.cc_label);
         mBccView = (TextView) findViewById(R.id.bcc);
         mBccLabel = (TextView) findViewById(R.id.bcc_label);
+        mTagsView = (TextView) findViewById(R.id.tags);
+        mTagsLabel = (TextView) findViewById(R.id.tags_label);
 
         mContactBadge = (ContactBadge) findViewById(R.id.contact_badge);
 
@@ -134,6 +138,8 @@ public class MessageHeader extends LinearLayout implements OnClickListener, OnLo
         mFontSizes.setViewTextSize(mCcLabel, mFontSizes.getMessageViewCC());
         mFontSizes.setViewTextSize(mBccView, mFontSizes.getMessageViewBCC());
         mFontSizes.setViewTextSize(mBccLabel, mFontSizes.getMessageViewBCC());
+        mFontSizes.setViewTextSize(mTagsView, mFontSizes.getMessageViewCC()); /* same font as cc */
+        mFontSizes.setViewTextSize(mTagsLabel, mFontSizes.getMessageViewCC());
 
         mFromView.setOnClickListener(this);
         mToView.setOnClickListener(this);
@@ -275,6 +281,8 @@ public class MessageHeader extends LinearLayout implements OnClickListener, OnLo
         final CharSequence cc = MessageHelper.toFriendly(message.getRecipients(Message.RecipientType.CC), contacts);
         final CharSequence bcc = MessageHelper.toFriendly(message.getRecipients(Message.RecipientType.BCC), contacts);
 
+        Set<Flag> msgFlags = message.getFlags();
+
         Address[] fromAddrs = message.getFrom();
         Address[] toAddrs = message.getRecipients(Message.RecipientType.TO);
         Address[] ccAddrs = message.getRecipients(Message.RecipientType.CC);
@@ -350,6 +358,21 @@ public class MessageHeader extends LinearLayout implements OnClickListener, OnLo
         mAnsweredIcon.setVisibility(message.isSet(Flag.ANSWERED) ? View.VISIBLE : View.GONE);
         mForwardedIcon.setVisibility(message.isSet(Flag.FORWARDED) ? View.VISIBLE : View.GONE);
         mFlagged.setChecked(message.isSet(Flag.FLAGGED));
+
+        /* Are there user tags? Show them */
+        StringBuilder sb = new StringBuilder();
+        if (!msgFlags.isEmpty()) {
+            for (Flag f : msgFlags) {
+                if (f.isCustom()) {
+                    sb.append(f.realName() + ", ");
+                }
+            }
+
+            if (sb.length() > 0) {
+                sb.setLength(sb.length()-2);
+            }
+        }
+        updateAddressField(mTagsView, sb, mTagsLabel);
 
         mChip.setBackgroundColor(mAccount.getChipColor());
 
