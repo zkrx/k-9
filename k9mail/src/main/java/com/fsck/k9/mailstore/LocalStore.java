@@ -146,6 +146,9 @@ public class LocalStore extends Store {
     static final int FOLDER_NOTIFY_CLASS_INDEX = 12;
     static final int MORE_MESSAGES_INDEX = 13;
 
+    static final int KEYWTAG_KEYWORD_INDEX = 0;
+    static final int KEYWTAG_TAG_INDEX = 1;
+
     static final String[] UID_CHECK_PROJECTION = { "uid" };
 
     private static final String[] GET_ATTACHMENT_COLS = new String[] { "id", "root", "data_location", "encoding", "data" };
@@ -177,7 +180,7 @@ public class LocalStore extends Store {
      */
     private static final int THREAD_FLAG_UPDATE_BATCH_SIZE = 500;
 
-    public static final int DB_VERSION = 60;
+    public static final int DB_VERSION = 61;
 
     private final Context context;
     private final ContentResolver contentResolver;
