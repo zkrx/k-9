@@ -469,6 +469,10 @@ public class LocalStore extends Store {
         }
     }
 
+    public Map<String, Flag> getTagMappings() {
+        return Flag.REMEMBERED_KEYWORDS;
+    }
+
     @Override
     public void checkSettings() throws MessagingException {
     }
