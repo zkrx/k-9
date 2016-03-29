@@ -1,14 +1,14 @@
 package com.fsck.k9.mail.store.webdav;
 
-import org.apache.http.conn.ConnectTimeoutException;
-import org.apache.http.conn.scheme.LayeredSocketFactory;
-import org.apache.http.params.HttpParams;
-
-import com.fsck.k9.mail.ssl.TrustedSocketFactory;
 
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
+
+import com.fsck.k9.mail.ssl.TrustedSocketFactory;
+import org.apache.http.conn.scheme.LayeredSocketFactory;
+import org.apache.http.conn.ssl.SSLSocketFactory;
+import org.apache.http.params.HttpParams;
 
 /**
  * Provides a factory for creating WebDAV capable sockets.
@@ -54,75 +54,66 @@ import java.net.Socket;
  * stack (the {@link java.net.HttpURLConnection}/{@link javax.net.ssl.HttpsURLConnection} classes
  * are designed for that).
  */
-public class WebDavSocketFactory implements LayeredSocketFactory {
+class WebDavSocketFactory implements LayeredSocketFactory {
     //Optional alias for referencing user-trusted certificate.
-    private final String mCertificateAlias;
-    private final String mDefaultHost;
-    private final int mDefaultPort;
+    private final String certificateAlias;
+    private final String defaultHost;
+    private final int defaultPort;
     // For creating secure sockets (with optional user-trusted certificate)
-    private TrustedSocketFactory mTrustedSocketFactory;
+    private final TrustedSocketFactory trustedSocketFactory;
     // For connecting existing sockets with the correct HTTP params and local binding
-    private org.apache.http.conn.ssl.SSLSocketFactory mSchemeSocketFactory;
+    private final SSLSocketFactory schemeSocketFactory;
+
 
     /**
      * Create a new socket factory, using the given trusted socket factory and alias.
      */
-    public WebDavSocketFactory(TrustedSocketFactory trustedSocketFactory,
-                               org.apache.http.conn.ssl.SSLSocketFactory internalSocketFactory,
-                               String defaultHost,
-                               int defaultPort,
-                               String certificateAlias) {
-        mTrustedSocketFactory = trustedSocketFactory;
-        mSchemeSocketFactory = internalSocketFactory;
-        mSchemeSocketFactory.setHostnameVerifier(
-                org.apache.http.conn.ssl.SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
+    public WebDavSocketFactory(TrustedSocketFactory trustedSocketFactory, SSLSocketFactory internalSocketFactory,
+            String defaultHost, int defaultPort, String certificateAlias) {
+        this.trustedSocketFactory = trustedSocketFactory;
+        schemeSocketFactory = internalSocketFactory;
+        schemeSocketFactory.setHostnameVerifier(SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
 
-        mCertificateAlias = certificateAlias;
-        mDefaultHost = defaultHost;
-        mDefaultPort = defaultPort;
+        this.certificateAlias = certificateAlias;
+        this.defaultHost = defaultHost;
+        this.defaultPort = defaultPort;
     }
 
     @Override
     public Socket createSocket() throws IOException {
-        return createSocket(null, mDefaultHost, mDefaultPort);
+        return createSocket(null, defaultHost, defaultPort);
     }
 
     @Override
-    public Socket createSocket(final Socket socket, final String host, final int port,
-                               final boolean autoClose) throws IOException {
-        if (!autoClose)
+    public Socket createSocket(Socket socket, String host, int port, boolean autoClose) throws IOException {
+        if (!autoClose) {
             throw new IOException("We don't support non-auto close sockets");
+        }
+
         return createSocket(socket, host, port);
     }
 
-    private Socket createSocket(
-            final Socket socket,
-            final String host,
-            final int port) throws IOException {
+    private Socket createSocket(Socket socket, String host, int port) throws IOException {
         try {
-            return mTrustedSocketFactory.createSocket(
-                    socket,
-                    host,
-                    port,
-                    mCertificateAlias);
+            return trustedSocketFactory.createSocket(socket, host, port, certificateAlias);
         } catch (Exception e) {
             throw new IOException("Exception creating trusted socket", e);
         }
     }
 
     @Override
-    public Socket connectSocket(Socket sock, String host, int port,
-                                InetAddress localAddress, int localPort, HttpParams params)
-            throws IOException, ConnectTimeoutException {
+    public Socket connectSocket(Socket sock, String host, int port, InetAddress localAddress, int localPort,
+            HttpParams params) throws IOException {
         if (sock == null) {
             //We don't want to delegate creation - we just want the Scheme to wrap a secure socket.
             sock = createSocket(null, host, port);
         }
-        return mSchemeSocketFactory.connectSocket(sock, host, port, localAddress, localPort, params);
+
+        return schemeSocketFactory.connectSocket(sock, host, port, localAddress, localPort, params);
     }
 
     @Override
     public boolean isSecure(Socket sock) throws IllegalArgumentException {
-        return mSchemeSocketFactory.isSecure(sock) && mTrustedSocketFactory.isSecure(sock);
+        return schemeSocketFactory.isSecure(sock) && trustedSocketFactory.isSecure(sock);
     }
 }

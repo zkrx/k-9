@@ -6,7 +6,6 @@ import java.net.Socket;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -16,10 +15,7 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import com.fsck.k9.mail.MessagingException;
-
-import org.apache.http.conn.scheme.SocketFactory;
-import org.apache.http.conn.ssl.StrictHostnameVerifier;
-
+import com.fsck.k9.mail.helper.ArrayHelper;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocket;
@@ -182,14 +178,22 @@ public class DefaultTrustedSocketFactory implements TrustedSocketFactory {
      */
     @Override
     public boolean isSecure(Socket socket) {
-        if(!(socket instanceof SSLSocket))
+        if (!(socket instanceof SSLSocket)) {
             return false;
+        }
+
         SSLSocket sslSocket = (SSLSocket) socket;
-        if(Arrays.asList(BLACKLISTED_PROTOCOLS).contains(sslSocket.getSession().getProtocol()))
-            return false;
-        if(Arrays.asList(BLACKLISTED_CIPHERS).contains(sslSocket.getSession().getCipherSuite()))
-            return false;
-        return true;
+        return !usesBlacklistedProtocol(sslSocket) && !usesBlacklistedCipher(sslSocket);
+    }
+
+    private boolean usesBlacklistedProtocol(SSLSocket sslSocket) {
+        String protocol = sslSocket.getSession().getProtocol();
+        return ArrayHelper.contains(BLACKLISTED_PROTOCOLS, protocol);
+    }
+
+    private boolean usesBlacklistedCipher(SSLSocket sslSocket) {
+        String cipherSuite = sslSocket.getSession().getCipherSuite();
+        return ArrayHelper.contains(BLACKLISTED_CIPHERS, cipherSuite);
     }
 
     private static void hardenSocket(SSLSocket sock) {
