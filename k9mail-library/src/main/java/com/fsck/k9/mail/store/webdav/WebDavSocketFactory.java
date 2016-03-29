@@ -3,77 +3,26 @@ package com.fsck.k9.mail.store.webdav;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 
 import com.fsck.k9.mail.ssl.TrustedSocketFactory;
+import javax.net.ssl.SSLSocket;
 import org.apache.http.conn.scheme.LayeredSocketFactory;
-import org.apache.http.conn.ssl.SSLSocketFactory;
+import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
 
-/**
- * Provides a factory for creating WebDAV capable sockets.
- *
- * <h3>Design Goals</h3>
- * The WebDAV SocketFactory has two objectives:
- *
- * 1. Implement the (deprecated) SocketFactory API
- * 2. Use our TrustedSocketFactory implementation
- *
- * To do this we implemented a layered socket factory. In this approach we need two socket factories.
- * We can't just use SchemeSocketFactory as we want to be able to use custom self-trusted
- * certificates on the fly.
- *
- * When asked to create a socket, we call the TrustedSocketFactory to provide us with a socket
- * that uses the SSLContext we want. We do the hostname and certificate verification here.
- *
- * When asked to connect a socket using the API we use the Apache SSLSocketFactory.
- * We don't need to do any hostname verification here because we'll be using a socket that
- * has already been created by us. If we do strict verification here,
- * we can't use our self-trusted certificates.
- *
- * <h4>Developer Notes</h4>
- *
- * The Apache SSLSocketFactory we create internally must NEVER be used to create a Socket,
- * otherwise we can leak sockets that do no hostname verification at all.
- *
- * We thus have the following layering model:
- *
- * org.apache.http.conn.ssl.SSLSocketFactory
- * TrustedSocketFactory.SSLSocketFactory
- *
- * Which produces an SSLSocket (with accepted self-signed alias if necessary)
- * that has the relevant connection timeouts, is bound locally and has HTTP params
- * associated with it.
- *
- * <h4>Deprecated API Usage</h4>
- *
- * We are using the deprecated API because the alternative is hand-rolling the
- * entire HTTP stack support plus WebDAV. While this would be nicer it's an awful lot of work.
- *
- * The DefaultHttpClient and associated API is only really deprecated for use as a normal HTTP GET/POST
- * stack (the {@link java.net.HttpURLConnection}/{@link javax.net.ssl.HttpsURLConnection} classes
- * are designed for that).
- */
+
 class WebDavSocketFactory implements LayeredSocketFactory {
-    //Optional alias for referencing user-trusted certificate.
     private final String certificateAlias;
     private final String defaultHost;
     private final int defaultPort;
-    // For creating secure sockets (with optional user-trusted certificate)
     private final TrustedSocketFactory trustedSocketFactory;
-    // For connecting existing sockets with the correct HTTP params and local binding
-    private final SSLSocketFactory schemeSocketFactory;
 
 
-    /**
-     * Create a new socket factory, using the given trusted socket factory and alias.
-     */
-    public WebDavSocketFactory(TrustedSocketFactory trustedSocketFactory, SSLSocketFactory internalSocketFactory,
-            String defaultHost, int defaultPort, String certificateAlias) {
+    public WebDavSocketFactory(TrustedSocketFactory trustedSocketFactory, String defaultHost, int defaultPort,
+            String certificateAlias) {
         this.trustedSocketFactory = trustedSocketFactory;
-        schemeSocketFactory = internalSocketFactory;
-        schemeSocketFactory.setHostnameVerifier(SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
-
         this.certificateAlias = certificateAlias;
         this.defaultHost = defaultHost;
         this.defaultPort = defaultPort;
@@ -102,18 +51,40 @@ class WebDavSocketFactory implements LayeredSocketFactory {
     }
 
     @Override
-    public Socket connectSocket(Socket sock, String host, int port, InetAddress localAddress, int localPort,
+    public Socket connectSocket(Socket socket, String host, int port, InetAddress localAddress, int localPort,
             HttpParams params) throws IOException {
-        if (sock == null) {
-            //We don't want to delegate creation - we just want the Scheme to wrap a secure socket.
-            sock = createSocket(null, host, port);
+        if (socket == null) {
+            socket = createSocket(null, host, port);
         }
 
-        return schemeSocketFactory.connectSocket(sock, host, port, localAddress, localPort, params);
+        if (!(socket instanceof SSLSocket)) {
+            throw new IOException("Not an SSLSocket instance");
+        }
+
+        SSLSocket sslSocket = (SSLSocket) socket;
+
+        if (localAddress != null || localPort > 0) {
+            if (localPort < 0) {
+                localPort = 0;
+            }
+
+            InetSocketAddress localSocketAddress = new InetSocketAddress(localAddress, localPort);
+            sslSocket.bind(localSocketAddress);
+        }
+
+        int connectionTimeout = HttpConnectionParams.getConnectionTimeout(params);
+        int soTimeout = HttpConnectionParams.getSoTimeout(params);
+
+        InetSocketAddress remoteAddress = new InetSocketAddress(host, port);
+        sslSocket.connect(remoteAddress, connectionTimeout);
+
+        sslSocket.setSoTimeout(soTimeout);
+
+        return sslSocket;
     }
 
     @Override
     public boolean isSecure(Socket sock) throws IllegalArgumentException {
-        return schemeSocketFactory.isSecure(sock) && trustedSocketFactory.isSecure(sock);
+        return trustedSocketFactory.isSecure(sock);
     }
 }

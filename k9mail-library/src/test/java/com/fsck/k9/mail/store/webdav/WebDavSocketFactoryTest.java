@@ -2,12 +2,12 @@ package com.fsck.k9.mail.store.webdav;
 
 
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 
 import com.fsck.k9.mail.ssl.TrustedSocketFactory;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocket;
-import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.http.params.CoreConnectionPNames;
 import org.apache.http.params.HttpParams;
 import org.junit.Before;
@@ -33,6 +33,9 @@ import static org.mockito.Mockito.when;
 public class WebDavSocketFactoryTest {
     private static final String DEFAULT_HOST = "defaultHost.com";
     private static final int DEFAULT_PORT = 1000;
+    private static final String OTHER_HOST = "otherHost.com";
+    private static final int OTHER_PORT = 10001;
+    private static final int LOCAL_PORT = 10001;
     private static final int CONNECTION_TIMEOUT = 1030;
     private static final String CERTIFICATE_ALIAS = "certificateAlias";
 
@@ -40,17 +43,11 @@ public class WebDavSocketFactoryTest {
     @Mock
     private TrustedSocketFactory trustedSocketFactory;
     @Mock
-    private SSLSocketFactory apacheSocketFactory;
-    @Mock
     private SSLSocket trustedSocket;
     @Mock
     private SSLSocket customAddressTrustedSocket;
     @Mock
-    private SSLSocket wrappedTrustedSocket;
-    @Mock
-    private SSLSocket wrappedCustomAddressTrustedSocket;
-    @Mock
-    private Socket unknownSocket;
+    private SSLSocket unknownSocket;
     @Mock
     private SSLSession sslSession;
     @Mock
@@ -59,25 +56,18 @@ public class WebDavSocketFactoryTest {
     private InetAddress localAddress;
 
     private WebDavSocketFactory webDavSocketFactory;
-    private String otherHost = "otherHost.com";
-    private int otherPort = 10001;
-    private int localPort = 10001;
 
 
     @Before
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
-        webDavSocketFactory = new WebDavSocketFactory(trustedSocketFactory, apacheSocketFactory,
+        webDavSocketFactory = new WebDavSocketFactory(trustedSocketFactory,
                 DEFAULT_HOST, DEFAULT_PORT, CERTIFICATE_ALIAS);
         when(trustedSocketFactory.createSocket(null, DEFAULT_HOST, DEFAULT_PORT, CERTIFICATE_ALIAS))
                 .thenReturn(trustedSocket);
 
-        when(trustedSocketFactory.createSocket(null, otherHost, otherPort, CERTIFICATE_ALIAS))
+        when(trustedSocketFactory.createSocket(null, OTHER_HOST, OTHER_PORT, CERTIFICATE_ALIAS))
                 .thenReturn(customAddressTrustedSocket);
-        when(apacheSocketFactory.connectSocket(trustedSocket, otherHost, otherPort, localAddress, localPort, params))
-                .thenReturn(wrappedTrustedSocket);
-        when(apacheSocketFactory.connectSocket(customAddressTrustedSocket, otherHost, otherPort,
-                localAddress, localPort, params)).thenReturn(wrappedCustomAddressTrustedSocket);
         when(params.getIntParameter(eq(CoreConnectionPNames.CONNECTION_TIMEOUT), anyInt()))
                 .thenReturn(CONNECTION_TIMEOUT);
         when(customAddressTrustedSocket.getSession()).thenReturn(sslSession);
@@ -93,8 +83,8 @@ public class WebDavSocketFactoryTest {
     @Test
     public void createSocket_withCustomHostPort_usesTrustedSocketFactoryToCreateSocket() throws Exception {
         Socket customAddressTrustedSocket = mock(Socket.class);
-        String host = "otherHost.com";
-        int port = 10001;
+        String host = OTHER_HOST;
+        int port = OTHER_PORT;
         when(trustedSocketFactory.createSocket(null, host, port, CERTIFICATE_ALIAS))
                 .thenReturn(customAddressTrustedSocket);
 
@@ -104,40 +94,30 @@ public class WebDavSocketFactoryTest {
     }
 
     @Test
-    public void connectSocket_withNoSocket_passesTrustedSocketToApacheSocketFactory() throws Exception {
-        webDavSocketFactory.connectSocket(null, otherHost, otherPort, localAddress, localPort, params);
+    public void connectSocket_withNoSocket_providesWrappedCustomSocket() throws Exception {
+        Socket socket = webDavSocketFactory.connectSocket(
+                null, OTHER_HOST, OTHER_PORT, localAddress, LOCAL_PORT, params);
 
-        verify(apacheSocketFactory).connectSocket(customAddressTrustedSocket, otherHost, otherPort, localAddress,
-                localPort, params);
+        assertSame(customAddressTrustedSocket, socket);
     }
 
     @Test
-    public void connectSocket_withNoSocket_providesWrappedCustomSocket() throws Exception {
-        Socket socket = webDavSocketFactory.connectSocket(null, otherHost, otherPort, localAddress, localPort, params);
+    public void connectSocket_withNoSocket_passesTrustedSocketToApacheSocketFactory() throws Exception {
+        webDavSocketFactory.connectSocket(null, OTHER_HOST, OTHER_PORT, localAddress, LOCAL_PORT, params);
 
-        assertSame(wrappedCustomAddressTrustedSocket, socket);
+        verify(customAddressTrustedSocket).connect(
+                eq(new InetSocketAddress(OTHER_HOST, OTHER_PORT)), eq(CONNECTION_TIMEOUT));
     }
 
     @Test
     public void connectSocket_bindsProvidedSocketToLocalAddressAndUsesHttpParams() throws Exception {
-        webDavSocketFactory.connectSocket(unknownSocket, otherHost, otherPort, localAddress, localPort, params);
+        webDavSocketFactory.connectSocket(unknownSocket, OTHER_HOST, OTHER_PORT, localAddress, LOCAL_PORT, params);
 
-        verify(apacheSocketFactory).connectSocket(unknownSocket, otherHost, otherPort, localAddress, localPort, params);
-    }
-
-    @Test
-    public void isSecure_whenApacheSaysNo_isFalse() throws Exception {
-        when(apacheSocketFactory.isSecure(unknownSocket)).thenReturn(false);
-        when(trustedSocketFactory.isSecure(unknownSocket)).thenReturn(true);
-
-        boolean result = webDavSocketFactory.isSecure(unknownSocket);
-
-        assertFalse(result);
+        verify(unknownSocket).bind(eq(new InetSocketAddress(localAddress, LOCAL_PORT)));
     }
 
     @Test
     public void isSecure_whenTrustedSaysNo_isFalse() throws Exception {
-        when(apacheSocketFactory.isSecure(unknownSocket)).thenReturn(true);
         when(trustedSocketFactory.isSecure(unknownSocket)).thenReturn(false);
 
         boolean result = webDavSocketFactory.isSecure(unknownSocket);
@@ -146,8 +126,7 @@ public class WebDavSocketFactoryTest {
     }
 
     @Test
-    public void isSecure_whenBothSaySecure_isTrue() throws Exception {
-        when(apacheSocketFactory.isSecure(unknownSocket)).thenReturn(true);
+    public void isSecure_whenTrustedSaySecure_isTrue() throws Exception {
         when(trustedSocketFactory.isSecure(unknownSocket)).thenReturn(true);
 
         boolean result = webDavSocketFactory.isSecure(unknownSocket);

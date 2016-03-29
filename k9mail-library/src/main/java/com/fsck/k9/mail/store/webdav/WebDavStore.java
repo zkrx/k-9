@@ -8,14 +8,12 @@ import com.fsck.k9.mail.CertificateValidationException;
 import com.fsck.k9.mail.store.RemoteStore;
 import com.fsck.k9.mail.store.StoreConfig;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.http.*;
 import org.apache.http.client.CookieStore;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.protocol.ClientContext;
 import org.apache.http.conn.scheme.Scheme;
 import org.apache.http.conn.scheme.SchemeRegistry;
-import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.message.BasicNameValuePair;
@@ -33,12 +31,7 @@ import javax.xml.parsers.SAXParserFactory;
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.zip.GZIPInputStream;
 
 import static com.fsck.k9.mail.K9MailLib.DEBUG_PROTOCOL_WEBDAV;
 import static com.fsck.k9.mail.K9MailLib.LOG_TAG;
@@ -972,8 +965,7 @@ public class WebDavStore extends RemoteStore {
             // SSLSocketFactory with one that allows us to inject our own certificates.
             SchemeRegistry reg = mHttpClient.getConnectionManager().getSchemeRegistry();
             WebDavSocketFactory webDavSocketFactory =
-                    new WebDavSocketFactory(mTrustedSocketFactory,
-                            SSLSocketFactory.getSocketFactory(), mHost, 443, mCertificateAlias);
+                    new WebDavSocketFactory(mTrustedSocketFactory, mHost, 443, mCertificateAlias);
             Scheme s = new Scheme("https", webDavSocketFactory, 443);
             reg.register(s);
         }
