@@ -48,7 +48,7 @@ public class OpenPgpApi {
     /**
      * see CHANGELOG.md
      */
-    public static final int API_VERSION = 10;
+    public static final int API_VERSION = 13;
 
     /**
      * General extras
@@ -243,6 +243,9 @@ public class OpenPgpApi {
     public static final String EXTRA_KEY_ID = "key_id";
     public static final String RESULT_KEY_IDS = "key_ids";
 
+    // CHECK_IDENTITY
+    public static final String EXTRA_API_IDENTITY = "api_identity";
+
     /* Service Intent returns */
     public static final String RESULT_CODE = "result_code";
 
@@ -257,6 +260,9 @@ public class OpenPgpApi {
     public static final String RESULT_ERROR = "error";
     public static final String RESULT_INTENT = "intent";
 
+    // CHECK_PERMISSON
+    public static final String RESULT_USER_ID = "user_id";
+
     // DECRYPT_VERIFY
     public static final String EXTRA_DECRYPTION_RESULT = "decryption_result";
     public static final String EXTRA_DETACHED_SIGNATURE = "detached_signature";
@@ -269,9 +275,12 @@ public class OpenPgpApi {
     // This will be the charset which was specified in the headers of ascii armored input, if any
     public static final String RESULT_CHARSET = "charset";
 
+    public static final String ACTION_CHECK_IDENTITY = "org.openintents.openpgp.action.CHECK_IDENTITY";
+
     // INTERNAL, should not be used
     public static final String EXTRA_CALL_UUID1 = "call_uuid1";
     public static final String EXTRA_CALL_UUID2 = "call_uuid2";
+    public static final long KEY_NONE = 0;
 
     IOpenPgpService2 mService;
     Context mContext;
@@ -622,7 +631,12 @@ public class OpenPgpApi {
     }
 
     public void checkPermissionPing(final PermissionPingCallback permissionPingCallback) {
+        checkPermissionPing(permissionPingCallback, null);
+    }
+
+    public void checkPermissionPing(final PermissionPingCallback permissionPingCallback, Long keyId) {
         Intent intent = new Intent(OpenPgpApi.ACTION_CHECK_PERMISSION);
+        intent.putExtra(OpenPgpApi.EXTRA_KEY_ID, keyId);
         executeApiAsync(intent, null, null, new IOpenPgpCallback() {
             @Override
             public void onReturn(Intent result) {

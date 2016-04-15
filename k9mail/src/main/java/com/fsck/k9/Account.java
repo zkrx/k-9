@@ -219,7 +219,6 @@ public class Account implements BaseAccount, StoreConfig {
     private boolean mReplyAfterQuote;
     private boolean mStripSignature;
     private boolean mSyncRemoteDeletions;
-    private long mCryptoKey;
     private boolean mMarkMessageAsReadOnView;
     private boolean mAlwaysShowCcBcc;
     private boolean mAllowRemoteSearch;
@@ -314,7 +313,6 @@ public class Account implements BaseAccount, StoreConfig {
         mReplyAfterQuote = DEFAULT_REPLY_AFTER_QUOTE;
         mStripSignature = DEFAULT_STRIP_SIGNATURE;
         mSyncRemoteDeletions = true;
-        mCryptoKey = NO_OPENPGP_KEY;
         mAllowRemoteSearch = false;
         mRemoteSearchFullText = false;
         mRemoteSearchNumResults = DEFAULT_REMOTE_SEARCH_NUM_RESULTS;
@@ -462,7 +460,6 @@ public class Account implements BaseAccount, StoreConfig {
         mIsSignatureBeforeQuotedText = storage.getBoolean(mUuid  + ".signatureBeforeQuotedText", false);
         identities = loadIdentities(storage);
 
-        mCryptoKey = storage.getLong(mUuid + ".cryptoKey", NO_OPENPGP_KEY);
         mAllowRemoteSearch = storage.getBoolean(mUuid + ".allowRemoteSearch", false);
         mRemoteSearchFullText = storage.getBoolean(mUuid + ".remoteSearchFullText", false);
         mRemoteSearchNumResults = storage.getInt(mUuid + ".remoteSearchNumResults", DEFAULT_REMOTE_SEARCH_NUM_RESULTS);
@@ -551,7 +548,8 @@ public class Account implements BaseAccount, StoreConfig {
         editor.remove(mUuid + ".showPicturesEnum");
         editor.remove(mUuid + ".replyAfterQuote");
         editor.remove(mUuid + ".stripSignature");
-        editor.remove(mUuid + ".cryptoApp"); // this is no longer set, but cleans up legacy values
+        editor.remove(mUuid + ".cryptoApp"); // the crypto settings are no longer set, but clean up legacy values
+        editor.remove(mUuid + ".cryptoKey");
         editor.remove(mUuid + ".cryptoAutoSignature");
         editor.remove(mUuid + ".cryptoAutoEncrypt");
         editor.remove(mUuid + ".cryptoApp");
@@ -728,7 +726,6 @@ public class Account implements BaseAccount, StoreConfig {
         editor.putBoolean(mUuid + ".defaultQuotedTextShown", mDefaultQuotedTextShown);
         editor.putBoolean(mUuid + ".replyAfterQuote", mReplyAfterQuote);
         editor.putBoolean(mUuid + ".stripSignature", mStripSignature);
-        editor.putLong(mUuid + ".cryptoKey", mCryptoKey);
         editor.putBoolean(mUuid + ".allowRemoteSearch", mAllowRemoteSearch);
         editor.putBoolean(mUuid + ".remoteSearchFullText", mRemoteSearchFullText);
         editor.putInt(mUuid + ".remoteSearchNumResults", mRemoteSearchNumResults);
@@ -1589,14 +1586,6 @@ public class Account implements BaseAccount, StoreConfig {
 
     public synchronized void setStripSignature(boolean stripSignature) {
         mStripSignature = stripSignature;
-    }
-
-    public long getCryptoKey() {
-        return mCryptoKey;
-    }
-
-    public void setCryptoKey(long keyId) {
-        mCryptoKey = keyId;
     }
 
     public boolean allowRemoteSearch() {

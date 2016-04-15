@@ -33,10 +33,7 @@ public class ManageIdentities extends ChooseIdentity {
     }
 
     private void editItem(int i) {
-        Intent intent = new Intent(ManageIdentities.this, EditIdentity.class);
-        intent.putExtra(EditIdentity.EXTRA_ACCOUNT, mAccount.getUuid());
-        intent.putExtra(EditIdentity.EXTRA_IDENTITY, mAccount.getIdentity(i));
-        intent.putExtra(EditIdentity.EXTRA_IDENTITY_INDEX, i);
+        Intent intent = EditIdentity.newInstance(this, mAccount.getIdentity(i), i, mAccount.getUuid());
         startActivityForResult(intent, ACTIVITY_EDIT_IDENTITY);
     }
 
@@ -51,8 +48,7 @@ public class ManageIdentities extends ChooseIdentity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
         case R.id.new_identity:
-            Intent intent = new Intent(ManageIdentities.this, EditIdentity.class);
-            intent.putExtra(EditIdentity.EXTRA_ACCOUNT, mAccount.getUuid());
+            Intent intent = EditIdentity.newInstance(this, mAccount.getUuid());
             startActivityForResult(intent, ACTIVITY_EDIT_IDENTITY);
             break;
         default:

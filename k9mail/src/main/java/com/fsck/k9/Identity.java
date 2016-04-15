@@ -2,14 +2,19 @@ package com.fsck.k9;
 
 import java.io.Serializable;
 
+
 public class Identity implements Serializable {
     private static final long serialVersionUID = -1666669071480985760L;
+
+
     private String mDescription;
     private String mName;
     private String mEmail;
     private String mSignature;
     private boolean mSignatureUse;
     private String replyTo;
+    private Long cryptoKey;
+
 
     public synchronized String getName() {
         return mName;
@@ -57,6 +62,14 @@ public class Identity implements Serializable {
 
     public synchronized void setReplyTo(String replyTo) {
         this.replyTo = replyTo;
+    }
+
+    public void setCryptoKey(Long cryptoKey) {
+        this.cryptoKey = cryptoKey;
+    }
+
+    public synchronized Long getCryptoKey() {
+        return cryptoKey;
     }
 
     @Override

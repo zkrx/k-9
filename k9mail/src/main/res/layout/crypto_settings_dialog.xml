@@ -4,12 +4,12 @@
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:gravity="center_horizontal">
+    android:gravity="center_horizontal"
+    android:padding="15dp">
 
     <com.fsck.k9.view.LinearViewAnimator
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="15dp"
         android:id="@+id/crypto_status_text"
         custom:upInAnimation="@anim/fade_in_right"
         custom:upOutAnimation="@anim/fade_out_right"
@@ -47,5 +47,16 @@
         android:layout_height="wrap_content"
         android:id="@+id/crypto_status_selector"
         />
+
+    <FrameLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+
+        <include
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            layout="@layout/crypto_select_key_view" />
+
+    </FrameLayout>
 
 </LinearLayout>

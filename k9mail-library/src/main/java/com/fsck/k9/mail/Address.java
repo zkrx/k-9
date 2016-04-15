@@ -339,4 +339,20 @@ public class Address implements Serializable {
             return s;
         }
     }
+
+    public static String getDisplayNameFromAddress(String addressString) {
+        if (addressString == null) {
+            return null;
+        }
+        Address[] addresses = parse(addressString);
+        if (addresses.length == 0) {
+            return null;
+        }
+        Address address = addresses[0];
+        if (address.getPersonal() != null) {
+            return address.getPersonal();
+        }
+        return address.getAddress();
+    }
+
 }

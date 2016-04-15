@@ -6,28 +6,39 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.DialogFragment;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.TextView;
 
 import com.fsck.k9.R;
+import com.fsck.k9.activity.MessageCompose;
 import com.fsck.k9.activity.compose.RecipientPresenter.CryptoMode;
 import com.fsck.k9.view.CryptoModeSelector;
 import com.fsck.k9.view.CryptoModeSelector.CryptoModeSelectorState;
 import com.fsck.k9.view.CryptoModeSelector.CryptoStatusSelectedListener;
 import com.fsck.k9.view.LinearViewAnimator;
+import com.fsck.k9.view.OpenPgpKeyStatusPresenter;
+import com.fsck.k9.view.OpenPgpKeyStatusPresenter.OpenPgpKeySelectMvpView;
+import com.fsck.k9.view.ToolableViewAnimator;
 
 
-public class CryptoSettingsDialog extends DialogFragment implements CryptoStatusSelectedListener {
+public class CryptoSettingsDialog extends DialogFragment implements CryptoStatusSelectedListener,
+        OpenPgpKeySelectMvpView {
     private static final String ARG_CURRENT_MODE = "current_mode";
 
 
     private CryptoModeSelector cryptoModeSelector;
     private LinearViewAnimator cryptoStatusText;
+    private ToolableViewAnimator openPgpSelectView;
+    private TextView openPgpSelectKeyName;
 
     private CryptoMode currentMode;
+    private OpenPgpKeyStatusPresenter openPgpKeyStatusPresenter;
 
 
     public static CryptoSettingsDialog newInstance(CryptoMode initialMode) {
@@ -49,8 +60,11 @@ public class CryptoSettingsDialog extends DialogFragment implements CryptoStatus
         View view = LayoutInflater.from(getActivity()).inflate(R.layout.crypto_settings_dialog, null);
         cryptoModeSelector = (CryptoModeSelector) view.findViewById(R.id.crypto_status_selector);
         cryptoStatusText = (LinearViewAnimator) view.findViewById(R.id.crypto_status_text);
+        openPgpSelectView = (ToolableViewAnimator) view.findViewById(R.id.crypto_select_view);
+        openPgpSelectKeyName = (TextView) view.findViewById(R.id.crypto_key_name);
 
         cryptoModeSelector.setCryptoStatusListener(this);
+        openPgpKeyStatusPresenter.setView(this);
 
         updateView(false);
 
@@ -73,18 +87,44 @@ public class CryptoSettingsDialog extends DialogFragment implements CryptoStatus
         return builder.create();
     }
 
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        if (!(context instanceof MessageCompose)) {
+            throw new IllegalArgumentException("CryptoSettingsDialog can only be attached to MessageCompose activity!");
+        }
+
+        MessageCompose messageComposeActivity = (MessageCompose) context;
+        openPgpKeyStatusPresenter = messageComposeActivity.createOpenPgpKeyStatusPresenterForView();
+    }
+
+    @Override
+    public void onDetach() {
+        openPgpKeyStatusPresenter = null;
+        super.onDetach();
+    }
+
     private void changeCryptoSettings() {
+        CryptoSettingsDialogListener cryptoSettingsDialogListener = getCryptoSettingsDialogListener();
+        if (cryptoSettingsDialogListener == null) {
+            return;
+        }
+        cryptoSettingsDialogListener.onCryptoModeChanged(currentMode);
+    }
+
+    @Nullable
+    private CryptoSettingsDialogListener getCryptoSettingsDialogListener() {
         Activity activity = getActivity();
         if (activity == null) {
             // is this supposed to happen?
-            return;
+            return null;
         }
-        boolean activityIsCryptoModeChangedListener = activity instanceof OnCryptoModeChangedListener;
+        boolean activityIsCryptoModeChangedListener = activity instanceof CryptoSettingsDialogListener;
         if (!activityIsCryptoModeChangedListener) {
             throw new AssertionError("This dialog must be called by an OnCryptoModeChangedListener!");
         }
 
-        ((OnCryptoModeChangedListener) activity).onCryptoModeChanged(currentMode);
+        return (CryptoSettingsDialogListener) activity;
     }
 
     void updateView(boolean animate) {
@@ -131,7 +171,22 @@ public class CryptoSettingsDialog extends DialogFragment implements CryptoStatus
         updateView(true);
     }
 
-    public interface OnCryptoModeChangedListener {
+    @Override
+    public void setOpenPgpSelectViewStatus(int displayedChild, String displayUserId) {
+        if (displayUserId != null) {
+            openPgpSelectKeyName.setText(getString(R.string.crypto_key_ok, displayUserId));
+        } else {
+            openPgpSelectKeyName.setText(R.string.crypto_key_ok_unknown);
+        }
+        openPgpSelectView.setDisplayedChild(displayedChild);
+    }
+
+    @Override
+    public void setOnClickListener(View.OnClickListener onClickListener) {
+        openPgpSelectView.setOnClickListener(onClickListener);
+    }
+
+    public interface CryptoSettingsDialogListener {
         void onCryptoModeChanged(CryptoMode cryptoMode);
     }
 

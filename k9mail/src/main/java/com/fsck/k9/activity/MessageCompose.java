@@ -55,7 +55,7 @@ import com.fsck.k9.activity.compose.AttachmentPresenter.AttachmentMvpView;
 import com.fsck.k9.activity.compose.AttachmentPresenter.WaitingAction;
 import com.fsck.k9.activity.compose.ComposeCryptoStatus;
 import com.fsck.k9.activity.compose.ComposeCryptoStatus.SendErrorState;
-import com.fsck.k9.activity.compose.CryptoSettingsDialog.OnCryptoModeChangedListener;
+import com.fsck.k9.activity.compose.CryptoSettingsDialog.CryptoSettingsDialogListener;
 import com.fsck.k9.activity.compose.IdentityAdapter;
 import com.fsck.k9.activity.compose.IdentityAdapter.IdentityContainer;
 import com.fsck.k9.activity.compose.PgpInlineDialog.OnOpenPgpInlineChangeListener;
@@ -68,6 +68,7 @@ import com.fsck.k9.activity.misc.Attachment;
 import com.fsck.k9.controller.MessagingController;
 import com.fsck.k9.controller.MessagingListener;
 import com.fsck.k9.controller.SimpleMessagingListener;
+import com.fsck.k9.crypto.OpenPgpApiHelper;
 import com.fsck.k9.fragment.ProgressDialogFragment;
 import com.fsck.k9.fragment.ProgressDialogFragment.CancelListener;
 import com.fsck.k9.helper.Contacts;
@@ -95,14 +96,15 @@ import com.fsck.k9.message.SimpleMessageFormat;
 import com.fsck.k9.ui.EolConvertingEditText;
 import com.fsck.k9.ui.compose.QuotedMessageMvpView;
 import com.fsck.k9.ui.compose.QuotedMessagePresenter;
+import com.fsck.k9.view.OpenPgpKeyStatusPresenter;
+import com.fsck.k9.view.OpenPgpKeyStatusPresenter.OpenPgpKeyStatusPendingIntentCallback;
 
 
 @SuppressWarnings("deprecation") // TODO get rid of activity dialogs and indeterminate progress bars
-public class MessageCompose extends K9Activity implements OnClickListener,
-        CancelListener, OnFocusChangeListener, OnCryptoModeChangedListener,
+public class MessageCompose extends K9Activity implements OnClickListener, CancelListener, OnFocusChangeListener,
         OnOpenPgpInlineChangeListener, OnOpenPgpSignOnlyChangeListener, MessageBuilder.Callback,
-        AttachmentPresenter.AttachmentsChangedListener, RecipientPresenter.RecipientsChangedListener {
-
+        AttachmentPresenter.AttachmentsChangedListener, RecipientPresenter.RecipientsChangedListener,
+        CryptoSettingsDialogListener, OpenPgpKeyStatusPendingIntentCallback {
     private static final int DIALOG_SAVE_OR_DISCARD_DRAFT_MESSAGE = 1;
     private static final int DIALOG_CONFIRM_DISCARD_ON_BACK = 2;
     private static final int DIALOG_CHOOSE_IDENTITY = 3;
@@ -144,6 +146,7 @@ public class MessageCompose extends K9Activity implements OnClickListener,
     private static final int REQUEST_MASK_LOADER_HELPER = (1 << 9);
     private static final int REQUEST_MASK_ATTACHMENT_PRESENTER = (1 << 10);
     private static final int REQUEST_MASK_MESSAGE_BUILDER = (1 << 11);
+    private static final int REQUEST_MASK_CRYPTO_SETTINGS_DIALOG = (1 << 12);
 
     /**
      * Regular expression to remove the first localized "Re:" prefix in subjects.
@@ -156,6 +159,9 @@ public class MessageCompose extends K9Activity implements OnClickListener,
     private QuotedMessagePresenter quotedMessagePresenter;
     private MessageLoaderHelper messageLoaderHelper;
     private AttachmentPresenter attachmentPresenter;
+    @Nullable
+    private OpenPgpKeyStatusPresenter openPgpKeyStatusPresenter;
+
 
     private Contacts contacts;
 
@@ -261,17 +267,20 @@ public class MessageCompose extends K9Activity implements OnClickListener,
             return;
         }
 
-        contacts = Contacts.getInstance(MessageCompose.this);
-
-        chooseIdentityButton = (TextView) findViewById(R.id.identity);
-        chooseIdentityButton.setOnClickListener(this);
+        if (identity == null) {
+            identity = account.getIdentity(0);
+        }
 
         RecipientMvpView recipientMvpView = new RecipientMvpView(this);
         ComposePgpInlineDecider composePgpInlineDecider = new ComposePgpInlineDecider();
         recipientPresenter = new RecipientPresenter(getApplicationContext(), getLoaderManager(), recipientMvpView,
-                account, composePgpInlineDecider, new ReplyToParser(), this);
+                account, identity, composePgpInlineDecider, this, new ReplyToParser());
         recipientPresenter.updateCryptoStatus();
 
+        contacts = Contacts.getInstance(MessageCompose.this);
+
+        chooseIdentityButton = (TextView) findViewById(R.id.identity);
+        chooseIdentityButton.setOnClickListener(this);
 
         subjectView = (EditText) findViewById(R.id.subject);
         subjectView.getInputExtras(true).putBoolean("allowEmoji", true);
@@ -348,10 +357,6 @@ public class MessageCompose extends K9Activity implements OnClickListener,
                 Timber.w("MessageCompose was started with an unsupported action");
                 this.action = Action.COMPOSE;
             }
-        }
-
-        if (identity == null) {
-            identity = account.getIdentity(0);
         }
 
         if (account.isSignatureBeforeQuotedText()) {
@@ -781,6 +786,16 @@ public class MessageCompose extends K9Activity implements OnClickListener,
         if ((requestCode & REQUEST_MASK_LOADER_HELPER) == REQUEST_MASK_LOADER_HELPER) {
             requestCode ^= REQUEST_MASK_LOADER_HELPER;
             messageLoaderHelper.onActivityResult(requestCode, resultCode, data);
+            return;
+        }
+
+        if ((requestCode & REQUEST_MASK_CRYPTO_SETTINGS_DIALOG) == REQUEST_MASK_CRYPTO_SETTINGS_DIALOG) {
+            requestCode ^= REQUEST_MASK_CRYPTO_SETTINGS_DIALOG;
+            if (openPgpKeyStatusPresenter == null) {
+                Timber.e("Cannot return intent result to missing openPgpKeyStatusPresenter!");
+                return;
+            }
+            openPgpKeyStatusPresenter.onActivityResult(requestCode, resultCode, data);
             return;
         }
 
@@ -1317,6 +1332,12 @@ public class MessageCompose extends K9Activity implements OnClickListener,
         quotedMessagePresenter.processDraftMessage(messageViewInfo, k9identity);
     }
 
+    public OpenPgpKeyStatusPresenter createOpenPgpKeyStatusPresenterForView() {
+        openPgpKeyStatusPresenter = new OpenPgpKeyStatusPresenter(getBaseContext(), this, identity);
+        openPgpKeyStatusPresenter.setDefaultUserId(OpenPgpApiHelper.buildUserId(identity));
+        return openPgpKeyStatusPresenter;
+    }
+
     static class SendMessageTask extends AsyncTask<Void, Void, Void> {
         final Context context;
         final Account account;
@@ -1490,6 +1511,16 @@ public class MessageCompose extends K9Activity implements OnClickListener,
 
     public void launchUserInteractionPendingIntent(PendingIntent pendingIntent, int requestCode) {
         requestCode |= REQUEST_MASK_RECIPIENT_PRESENTER;
+        try {
+            startIntentSenderForResult(pendingIntent.getIntentSender(), requestCode, null, 0, 0, 0);
+        } catch (SendIntentException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void launchCryptoSettingsDialogPendingIntent(PendingIntent pendingIntent, int requestCode) {
+        requestCode |= REQUEST_MASK_CRYPTO_SETTINGS_DIALOG;
         try {
             startIntentSenderForResult(pendingIntent.getIntentSender(), requestCode, null, 0, 0, 0);
         } catch (SendIntentException e) {

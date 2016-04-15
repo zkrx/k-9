@@ -15,6 +15,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
 import android.text.TextUtils;
 import timber.log.Timber;
@@ -73,6 +74,8 @@ public class RecipientPresenter implements PermissionPingCallback {
     private PendingIntent pendingUserInteractionIntent;
     private CryptoProviderState cryptoProviderState = CryptoProviderState.UNCONFIGURED;
     private OpenPgpServiceConnection openPgpServiceConnection;
+    @Nullable
+    private Identity currentIdentity;
 
 
     // persistent state, saved during onSaveInstanceState
@@ -83,8 +86,8 @@ public class RecipientPresenter implements PermissionPingCallback {
 
 
     public RecipientPresenter(Context context, LoaderManager loaderManager, RecipientMvpView recipientMvpView,
-            Account account, ComposePgpInlineDecider composePgpInlineDecider, ReplyToParser replyToParser,
-            RecipientsChangedListener recipientsChangedListener) {
+            Account account, Identity identity, ComposePgpInlineDecider composePgpInlineDecider,
+            RecipientsChangedListener recipientsChangedListener,  ReplyToParser replyToParser) {
         this.recipientMvpView = recipientMvpView;
         this.context = context;
         this.composePgpInlineDecider = composePgpInlineDecider;
@@ -93,6 +96,8 @@ public class RecipientPresenter implements PermissionPingCallback {
 
         recipientMvpView.setPresenter(this);
         recipientMvpView.setLoaderManager(loaderManager);
+
+        onSwitchIdentity(identity);
         onSwitchAccount(account);
     }
 
@@ -275,8 +280,8 @@ public class RecipientPresenter implements PermissionPingCallback {
         setupCryptoProvider();
     }
 
-    @SuppressWarnings("UnusedParameters")
     public void onSwitchIdentity(Identity identity) {
+        currentIdentity = identity;
 
         // TODO decide what actually to do on identity switch?
         /*
@@ -364,11 +369,11 @@ public class RecipientPresenter implements PermissionPingCallback {
                     .setEnablePgpInline(cryptoEnablePgpInline)
                     .setRecipients(getAllRecipients());
 
-            long accountCryptoKey = account.getCryptoKey();
-            if (accountCryptoKey != Account.NO_OPENPGP_KEY) {
+            Long identityCryptoKey = currentIdentity != null ? currentIdentity.getCryptoKey() : null;
+            if (identityCryptoKey != null && identityCryptoKey != Account.NO_OPENPGP_KEY) {
                 // TODO split these into individual settings? maybe after key is bound to identity
-                builder.setSigningKeyId(accountCryptoKey);
-                builder.setSelfEncryptId(accountCryptoKey);
+                builder.setSigningKeyId(identityCryptoKey);
+                builder.setSelfEncryptId(identityCryptoKey);
             }
 
             cachedCryptoStatus = builder.build();
@@ -554,7 +559,7 @@ public class RecipientPresenter implements PermissionPingCallback {
                 if (cachedCryptoStatus.isSignOnly()) {
                     recipientMvpView.showErrorIsSignOnly();
                 } else {
-                    recipientMvpView.showCryptoDialog(currentCryptoMode);
+                    recipientMvpView.showCryptoDialog(currentCryptoMode, currentIdentity);
                 }
                 return;
 

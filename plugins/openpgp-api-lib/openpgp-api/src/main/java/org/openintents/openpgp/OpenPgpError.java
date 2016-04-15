@@ -34,6 +34,9 @@ public class OpenPgpError implements Parcelable {
     public static final int NO_OR_WRONG_PASSPHRASE = 2;
     public static final int NO_USER_IDS = 3;
     public static final int OPPORTUNISTIC_MISSING_KEYS = 4;
+    public static final int KEY_ERROR = 5;
+    public static final int IDENTITY_KEY_NOT_CONFIGURED = 6;
+    public static final int IDENTITY_DISABLED = 7;
 
     int errorId;
     String message;

@@ -4,16 +4,20 @@ package com.fsck.k9.activity.compose;
 import java.util.Arrays;
 import java.util.List;
 
+import android.app.Activity;
 import android.app.LoaderManager;
 import android.app.PendingIntent;
+import android.content.Context;
 import android.text.TextWatcher;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnFocusChangeListener;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Toast;
 import android.widget.ViewAnimator;
 
 import com.fsck.k9.FontSizes;
+import com.fsck.k9.Identity;
 import com.fsck.k9.R;
 import com.fsck.k9.activity.MessageCompose;
 import com.fsck.k9.activity.compose.RecipientPresenter.CryptoMode;
@@ -391,8 +395,10 @@ public class RecipientMvpView implements OnFocusChangeListener, OnClickListener 
         }
     }
 
-    public void showCryptoDialog(CryptoMode currentCryptoMode) {
-        CryptoSettingsDialog dialog = CryptoSettingsDialog.newInstance(currentCryptoMode);
+    public void showCryptoDialog(CryptoMode currentCryptoMode, Identity identity) {
+        hideKeyboard();
+
+        CryptoSettingsDialog dialog = CryptoSettingsDialog.newInstance(currentCryptoMode, identity);
         dialog.show(activity.getFragmentManager(), "crypto_settings");
     }
 
@@ -404,6 +410,14 @@ public class RecipientMvpView implements OnFocusChangeListener, OnClickListener 
     public void showOpenPgpSignOnlyDialog(boolean firstTime) {
         PgpSignOnlyDialog dialog = PgpSignOnlyDialog.newInstance(firstTime, R.id.crypto_special_mode);
         dialog.show(activity.getFragmentManager(), "openpgp_signonly");
+    }
+
+    private void hideKeyboard() {
+        InputMethodManager imm = (InputMethodManager) activity.getSystemService(Context.INPUT_METHOD_SERVICE);
+        View decorView = activity.getWindow().getDecorView();
+        if (decorView != null) {
+            imm.hideSoftInputFromWindow(decorView.getApplicationWindowToken(), 0);
+        }
     }
 
     public void launchUserInteractionPendingIntent(PendingIntent pendingIntent, int requestCode) {
