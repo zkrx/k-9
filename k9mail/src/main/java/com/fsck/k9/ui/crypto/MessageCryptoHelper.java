@@ -29,11 +29,11 @@ import com.fsck.k9.mail.internet.MessageExtractor;
 import com.fsck.k9.mail.internet.MimeBodyPart;
 import com.fsck.k9.mail.internet.SizeAware;
 import com.fsck.k9.mail.internet.TextBody;
+import com.fsck.k9.mailstore.CryptoResultAnnotation;
 import com.fsck.k9.mailstore.CryptoResultAnnotation.CryptoError;
 import com.fsck.k9.mailstore.DecryptStreamParser;
 import com.fsck.k9.mailstore.LocalMessage;
 import com.fsck.k9.mailstore.MessageHelper;
-import com.fsck.k9.mailstore.CryptoResultAnnotation;
 import org.apache.commons.io.IOUtils;
 import org.openintents.openpgp.IOpenPgpService2;
 import org.openintents.openpgp.OpenPgpDecryptionResult;
@@ -48,13 +48,12 @@ import org.openintents.openpgp.util.OpenPgpServiceConnection.OnBound;
 
 
 public class MessageCryptoHelper {
-    private static final int REQUEST_CODE_CRYPTO = 1000;
     private static final int INVALID_OPENPGP_RESULT_CODE = -1;
     private static final MimeBodyPart NO_REPLACEMENT_PART = null;
+    public static final int REQUEST_CODE_USER_INTERACTION = 124;
 
 
     private final Context context;
-    private final Activity activity;
     private final MessageCryptoCallback callback;
     private final Account account;
 
@@ -71,7 +70,6 @@ public class MessageCryptoHelper {
 
     public MessageCryptoHelper(Activity activity, Account account, MessageCryptoCallback callback) {
         this.context = activity.getApplicationContext();
-        this.activity = activity;
         this.callback = callback;
         this.account = account;
     }
@@ -423,7 +421,8 @@ public class MessageCryptoHelper {
         }
 
         try {
-            activity.startIntentSenderForResult(pendingIntent.getIntentSender(), REQUEST_CODE_CRYPTO, null, 0, 0, 0);
+            callback.startPendingIntentForCryptoHelper(
+                    pendingIntent.getIntentSender(), REQUEST_CODE_USER_INTERACTION, null, 0, 0, 0);
         } catch (SendIntentException e) {
             Log.e(K9.LOG_TAG, "Internal error on starting pendingintent!", e);
         }
@@ -451,11 +450,10 @@ public class MessageCryptoHelper {
         onCryptoSuccess(resultAnnotation);
     }
 
-    public void handleCryptoResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode != REQUEST_CODE_CRYPTO) {
-            return;
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode != REQUEST_CODE_USER_INTERACTION) {
+            throw new IllegalStateException("got an activity result that wasn't meant for us. this is a bug!");
         }
-
         if (resultCode == Activity.RESULT_OK) {
             userInteractionResultIntent = data;
             decryptOrVerifyNextPart();
