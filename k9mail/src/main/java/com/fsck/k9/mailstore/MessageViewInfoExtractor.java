@@ -9,6 +9,7 @@ import android.content.Context;
 import android.support.annotation.VisibleForTesting;
 
 import com.fsck.k9.R;
+import com.fsck.k9.ui.crypto.MessageCryptoSplitter;
 import com.fsck.k9.helper.HtmlConverter;
 import com.fsck.k9.mail.Address;
 import com.fsck.k9.mail.Message;
@@ -18,6 +19,7 @@ import com.fsck.k9.mail.internet.MessageExtractor;
 import com.fsck.k9.mail.internet.Viewable;
 import com.fsck.k9.message.extractors.AttachmentInfoExtractor;
 import com.fsck.k9.ui.crypto.MessageCryptoAnnotations;
+import com.fsck.k9.ui.crypto.MessageCryptoSplitter.CryptoMessageParts;
 
 import static com.fsck.k9.mail.internet.MimeUtility.getHeaderParameter;
 import static com.fsck.k9.mail.internet.Viewable.Alternative;
@@ -34,20 +36,25 @@ public class MessageViewInfoExtractor {
     private static final int FILENAME_PREFIX_LENGTH = FILENAME_PREFIX.length();
     private static final String FILENAME_SUFFIX = " ";
     private static final int FILENAME_SUFFIX_LENGTH = FILENAME_SUFFIX.length();
-    private static final CryptoResultAnnotation NO_ANNOTATIONS = null;
 
     private MessageViewInfoExtractor() {}
 
     public static MessageViewInfo extractMessageForView(Context context,
             Message message, MessageCryptoAnnotations annotations) throws MessagingException {
 
-        // TODO properly handle decrypted data part - this just replaces the part
-        CryptoResultAnnotation pgpAnnotation = annotations.get(message);
         Part rootPart;
-        if (pgpAnnotation != NO_ANNOTATIONS && pgpAnnotation.hasReplacementData()) {
-            rootPart = pgpAnnotation.getReplacementData();
+        CryptoResultAnnotation cryptoResultAnnotation;
+        List<Part> extraParts;
+
+        CryptoMessageParts cryptoMessageParts = MessageCryptoSplitter.split(message, annotations);
+        if (cryptoMessageParts != null) {
+            rootPart = cryptoMessageParts.contentPart;
+            cryptoResultAnnotation = cryptoMessageParts.contentCryptoAnnotation;
+            extraParts = cryptoMessageParts.extraParts;
         } else {
             rootPart = message;
+            cryptoResultAnnotation = null;
+            extraParts = null;
         }
 
         ArrayList<Viewable> viewableParts = new ArrayList<>();
@@ -56,8 +63,11 @@ public class MessageViewInfoExtractor {
 
         ViewableExtractedText viewable = MessageViewInfoExtractor.extractTextFromViewables(context, viewableParts);
         List<AttachmentViewInfo> attachmentInfos = AttachmentInfoExtractor.extractAttachmentInfos(context, attachments);
+        List<AttachmentViewInfo> extraAttachmentInfos = extraParts != null ?
+                AttachmentInfoExtractor.extractAttachmentInfos(context, extraParts) : null;
 
-        return new MessageViewInfo(message, rootPart, viewable.html, attachmentInfos, pgpAnnotation);
+        return new MessageViewInfo(
+                message, rootPart, viewable.html, attachmentInfos, cryptoResultAnnotation, extraAttachmentInfos);
     }
 
     /**

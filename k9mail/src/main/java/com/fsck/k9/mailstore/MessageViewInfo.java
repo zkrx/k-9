@@ -11,16 +11,18 @@ public class MessageViewInfo {
     public final Message message;
     public final Part rootPart;
     public final String text;
-    public final List<AttachmentViewInfo> attachments;
     public final CryptoResultAnnotation cryptoResultAnnotation;
+    public final List<AttachmentViewInfo> attachments;
+    public final List<AttachmentViewInfo> extraAttachments;
 
 
     public MessageViewInfo(Message message, Part rootPart, String text, List<AttachmentViewInfo> attachments,
-            CryptoResultAnnotation cryptoResultAnnotation) {
+            CryptoResultAnnotation cryptoResultAnnotation, List<AttachmentViewInfo> extraAttachments) {
         this.message = message;
         this.rootPart = rootPart;
         this.text = text;
-        this.attachments = attachments;
         this.cryptoResultAnnotation = cryptoResultAnnotation;
+        this.attachments = attachments;
+        this.extraAttachments = extraAttachments;
     }
 }
