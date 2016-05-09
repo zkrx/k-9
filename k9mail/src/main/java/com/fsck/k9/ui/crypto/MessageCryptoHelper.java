@@ -14,6 +14,7 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender.SendIntentException;
+import android.support.annotation.WorkerThread;
 import android.util.Log;
 
 import com.fsck.k9.Account;
@@ -27,6 +28,7 @@ import com.fsck.k9.mail.Multipart;
 import com.fsck.k9.mail.Part;
 import com.fsck.k9.mail.internet.MessageExtractor;
 import com.fsck.k9.mail.internet.MimeBodyPart;
+import com.fsck.k9.mail.internet.SizeAware;
 import com.fsck.k9.mail.internet.TextBody;
 import com.fsck.k9.mailstore.CryptoResultAnnotation.CryptoError;
 import com.fsck.k9.mailstore.DecryptStreamParser;
@@ -221,6 +223,12 @@ public class MessageCryptoHelper {
 
         openPgpApi.executeApiAsync(intent, dataSource, dataSink, new IOpenPgpSinkResultCallback<MimeBodyPart>() {
             @Override
+            public void onProgress(int current, int max) {
+                Log.d(K9.LOG_TAG, "received progress status: " + current + " / " + max);
+                callback.onCryptoHelperProgress(current, max);
+            }
+
+            @Override
             public void onReturn(Intent result, MimeBodyPart bodyPart) {
                 currentCryptoResult = result;
                 onCryptoOperationReturned(bodyPart);
@@ -256,6 +264,11 @@ public class MessageCryptoHelper {
                 currentCryptoResult = result;
                 onCryptoOperationReturned(decryptedPart);
             }
+
+            @Override
+            public void onProgress(int current, int max) {
+                Log.d(K9.LOG_TAG, "got progress: " + current + " / " + max);
+            }
         });
     }
 
@@ -270,6 +283,11 @@ public class MessageCryptoHelper {
             public void onReturn(Intent result, Void dummy) {
                 currentCryptoResult = result;
                 onCryptoOperationReturned(null);
+            }
+
+            @Override
+            public void onProgress(int current, int max) {
+                Log.d(K9.LOG_TAG, "got progress: " + current + " / " + max);
             }
         });
     }
@@ -293,6 +311,27 @@ public class MessageCryptoHelper {
     private OpenPgpDataSource getDataSourceForEncryptedOrInlineData() throws IOException {
         return new OpenPgpApi.OpenPgpDataSource() {
             @Override
+            public Long getTotalDataSize() {
+                Part part = currentCryptoPart.part;
+                CryptoPartType cryptoPartType = currentCryptoPart.type;
+                Body body;
+                if (cryptoPartType == CryptoPartType.PGP_ENCRYPTED) {
+                    Multipart multipartEncryptedMultipart = (Multipart) part.getBody();
+                    BodyPart encryptionPayloadPart = multipartEncryptedMultipart.getBodyPart(1);
+                    body = encryptionPayloadPart.getBody();
+                } else if (cryptoPartType == CryptoPartType.PGP_INLINE) {
+                    body = part.getBody();
+                } else {
+                    throw new IllegalStateException("part to stream must be encrypted or inline!");
+                }
+                if (body instanceof SizeAware) {
+                    return ((SizeAware) body).getSize();
+                }
+                return null;
+            }
+
+            @Override
+            @WorkerThread
             public void writeTo(OutputStream os) throws IOException {
                 try {
                     Part part = currentCryptoPart.part;
@@ -318,6 +357,7 @@ public class MessageCryptoHelper {
     private OpenPgpDataSink<MimeBodyPart> getDataSinkForDecryptedData() throws IOException {
         return new OpenPgpDataSink<MimeBodyPart>() {
             @Override
+            @WorkerThread
             public MimeBodyPart processData(InputStream is) throws IOException {
                 try {
                     return DecryptStreamParser.parse(context, is);
