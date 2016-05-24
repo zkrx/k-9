@@ -19,6 +19,7 @@ import android.content.ClipData;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentSender;
 import android.content.IntentSender.SendIntentException;
 import android.content.Loader;
 import android.content.pm.ActivityInfo;
@@ -101,6 +102,9 @@ import com.fsck.k9.provider.AttachmentProvider;
 import com.fsck.k9.ui.EolConvertingEditText;
 import com.fsck.k9.ui.compose.QuotedMessageMvpView;
 import com.fsck.k9.ui.compose.QuotedMessagePresenter;
+import com.fsck.k9.ui.crypto.MessageCryptoAnnotations;
+import com.fsck.k9.ui.crypto.MessageCryptoCallback;
+import com.fsck.k9.ui.crypto.MessageCryptoHelper;
 
 
 @SuppressWarnings("deprecation")
@@ -157,6 +161,7 @@ public class MessageCompose extends K9Activity implements OnClickListener,
 
     private static final int REQUEST_MASK_RECIPIENT_PRESENTER = (1<<8);
     private static final int REQUEST_MASK_MESSAGE_BUILDER = (2<<8);
+    private static final int REQUEST_MASK_CRYPTO_HELPER = (4<<8);
 
     /**
      * Regular expression to remove the first localized "Re:" prefix in subjects.
@@ -202,6 +207,8 @@ public class MessageCompose extends K9Activity implements OnClickListener,
     private MessageBuilder currentMessageBuilder;
     private boolean mFinishAfterDraftSaved;
     private boolean alreadyNotifiedUserOfEmptySubject = false;
+    private MessageCryptoHelper sourceMessageCryptoHelper;
+    private MessageCryptoAnnotations cachedCryptoAnnotations;
 
     @Override
     public void onFocusChange(View v, boolean hasFocus) {
@@ -1150,6 +1157,12 @@ public class MessageCompose extends K9Activity implements OnClickListener,
             return;
         }
 
+        if ((requestCode & REQUEST_MASK_CRYPTO_HELPER) == REQUEST_MASK_CRYPTO_HELPER) {
+            requestCode ^= REQUEST_MASK_CRYPTO_HELPER;
+            sourceMessageCryptoHelper.onActivityResult(requestCode, resultCode, data);
+            return;
+        }
+
         if (resultCode != RESULT_OK) {
             return;
         }
@@ -1548,20 +1561,20 @@ public class MessageCompose extends K9Activity implements OnClickListener,
      * @param message
      *         The source message used to populate the various text fields.
      */
-    private void processSourceMessage(LocalMessage message) {
+    private void processSourceMessage(LocalMessage message, MessageCryptoAnnotations annotations) {
         try {
             switch (mAction) {
                 case REPLY:
                 case REPLY_ALL: {
-                    processMessageToReplyTo(message);
+                    processMessageToReplyTo(message, annotations);
                     break;
                 }
                 case FORWARD: {
-                    processMessageToForward(message);
+                    processMessageToForward(message, annotations);
                     break;
                 }
                 case EDIT_DRAFT: {
-                    processDraftMessage(message);
+                    processDraftMessage(message, annotations);
                     break;
                 }
                 default: {
@@ -1583,7 +1596,7 @@ public class MessageCompose extends K9Activity implements OnClickListener,
         updateMessageFormat();
     }
 
-    private void processMessageToReplyTo(Message message) throws MessagingException {
+    private void processMessageToReplyTo(Message message, MessageCryptoAnnotations annotations) throws MessagingException {
         if (message.getSubject() != null) {
             final String subject = PREFIX.matcher(message.getSubject()).replaceFirst("");
 
@@ -1620,7 +1633,7 @@ public class MessageCompose extends K9Activity implements OnClickListener,
         }
 
         // Quote the message and setup the UI.
-        quotedMessagePresenter.initFromReplyToMessage(message, mAction);
+        quotedMessagePresenter.initFromReplyToMessage(message, mAction, annotations);
 
         if (mAction == Action.REPLY || mAction == Action.REPLY_ALL) {
             Identity useIdentity = IdentityHelper.getRecipientIdentityFromMessage(mAccount, message);
@@ -1632,7 +1645,7 @@ public class MessageCompose extends K9Activity implements OnClickListener,
 
     }
 
-    private void processMessageToForward(Message message) throws MessagingException {
+    private void processMessageToForward(Message message, MessageCryptoAnnotations annotations) throws MessagingException {
         String subject = message.getSubject();
         if (subject != null && !subject.toLowerCase(Locale.US).startsWith("fwd:")) {
             mSubjectView.setText("Fwd: " + subject);
@@ -1654,7 +1667,7 @@ public class MessageCompose extends K9Activity implements OnClickListener,
         }
 
         // Quote the message and setup the UI.
-        quotedMessagePresenter.processMessageToForward(message);
+        quotedMessagePresenter.processMessageToForward(message, annotations);
 
         if (!mSourceMessageProcessed) {
             if (message.isSet(Flag.X_DOWNLOADED_PARTIAL) || !loadAttachments(message, 0)) {
@@ -1663,7 +1676,7 @@ public class MessageCompose extends K9Activity implements OnClickListener,
         }
     }
 
-    private void processDraftMessage(LocalMessage message) throws MessagingException {
+    private void processDraftMessage(LocalMessage message, MessageCryptoAnnotations annotations) throws MessagingException {
         mDraftId = MessagingController.getInstance(getApplication()).getId(message);
         mSubjectView.setText(message.getSubject());
 
@@ -1923,14 +1936,48 @@ public class MessageCompose extends K9Activity implements OnClickListener,
         }
     }
 
-    public void loadLocalMessageForDisplay(LocalMessage message, Action action) {
+    public void prepareLocalMessageForDisplay(final LocalMessage message) {
+        if (sourceMessageCryptoHelper != null) {
+            Log.e(K9.LOG_TAG, "trying to prepare message while already loading one? better avoid inconsistent state");
+            return;
+        }
+
+        if (cachedCryptoAnnotations != null) {
+            loadLocalMessageForDisplay(message, cachedCryptoAnnotations);
+            return;
+        }
+
+        sourceMessageCryptoHelper = new MessageCryptoHelper(this, mAccount, new MessageCryptoCallback() {
+            @Override
+            public void onCryptoOperationsFinished(MessageCryptoAnnotations annotations) {
+                cachedCryptoAnnotations = annotations;
+                sourceMessageCryptoHelper = null;
+                loadLocalMessageForDisplay(message, annotations);
+            }
+
+            @Override
+            public void startPendingIntentForCryptoHelper(IntentSender si, int requestCode, Intent fillIntent,
+                    int flagsMask, int flagValues, int extraFlags) throws SendIntentException {
+                requestCode |= REQUEST_MASK_CRYPTO_HELPER;
+                startIntentSenderForResult(si, requestCode, fillIntent, flagsMask, flagValues, extraFlags);
+            }
+
+            @Override
+            public void onCryptoHelperProgress(int current, int max) {
+                // TODO might show progress?
+            }
+        });
+        sourceMessageCryptoHelper.decryptOrVerifyMessagePartsIfNecessary(message);
+    }
+
+    public void loadLocalMessageForDisplay(LocalMessage message, MessageCryptoAnnotations annotations) {
         // We check to see if we've previously processed the source message since this
         // could be called when switching from HTML to text replies. If that happens, we
         // only want to update the UI with quoted text (which picks the appropriate
         // part).
         if (mSourceMessageProcessed) {
             try {
-                quotedMessagePresenter.populateUIWithQuotedMessage(message, true, action);
+                quotedMessagePresenter.populateUIWithQuotedMessage(message, true, mAction, annotations);
             } catch (MessagingException e) {
                 // Hm, if we couldn't populate the UI after source reprocessing, let's just delete it?
                 quotedMessagePresenter.showOrHideQuotedText(QuotedTextMode.HIDE);
@@ -1938,7 +1985,7 @@ public class MessageCompose extends K9Activity implements OnClickListener,
             }
             updateMessageFormat();
         } else {
-            processSourceMessage(message);
+            processSourceMessage(message, annotations);
             mSourceMessageProcessed = true;
         }
     }
@@ -1976,7 +2023,7 @@ public class MessageCompose extends K9Activity implements OnClickListener,
                     // could be called when switching from HTML to text replies. If that happens, we
                     // only want to update the UI with quoted text (which picks the appropriate
                     // part).
-                    loadLocalMessageForDisplay(message, mAction);
+                    prepareLocalMessageForDisplay(message);
                 }
             });
         }
