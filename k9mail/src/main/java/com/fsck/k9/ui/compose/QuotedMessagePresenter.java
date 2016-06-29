@@ -3,7 +3,6 @@ package com.fsck.k9.ui.compose;
 
 import java.util.Map;
 
-import android.content.res.Resources;
 import android.os.Bundle;
 import android.util.Log;
 
@@ -20,12 +19,14 @@ import com.fsck.k9.mail.Part;
 import com.fsck.k9.mail.internet.MessageExtractor;
 import com.fsck.k9.mail.internet.MimeUtility;
 import com.fsck.k9.mailstore.AttachmentResolver;
-import com.fsck.k9.mailstore.MessageViewInfo;
+import com.fsck.k9.mailstore.QuotedMessageInfo;
+import com.fsck.k9.mailstore.QuotedMessageInfoExtractor;
 import com.fsck.k9.message.IdentityField;
 import com.fsck.k9.message.InsertableHtmlContent;
 import com.fsck.k9.message.MessageBuilder;
 import com.fsck.k9.message.QuotedTextMode;
 import com.fsck.k9.message.SimpleMessageFormat;
+import com.fsck.k9.ui.message.LocalMessageExtractorLoader.MessageInfoExtractor;
 
 
 public class QuotedMessagePresenter {
@@ -39,7 +40,6 @@ public class QuotedMessagePresenter {
 
     private final QuotedMessageMvpView view;
     private final MessageCompose messageCompose;
-    private final Resources resources;
 
     private QuotedTextMode quotedTextMode;
     private QuoteStyle quoteStyle;
@@ -54,7 +54,6 @@ public class QuotedMessagePresenter {
     public QuotedMessagePresenter(
             MessageCompose messageCompose, QuotedMessageMvpView quotedMessageMvpView, Account account) {
         this.messageCompose = messageCompose;
-        this.resources = messageCompose.getResources();
         this.view = quotedMessageMvpView;
         onSwitchAccount(account);
 
@@ -73,60 +72,33 @@ public class QuotedMessagePresenter {
         view.showOrHideQuotedText(mode, quotedTextFormat);
     }
 
+    public MessageInfoExtractor<QuotedMessageInfo> getQuotedMessageInfoExtractor(Action action) {
+        MessageFormat requestedMessageFormat;
+        if (forcePlainText) {
+            requestedMessageFormat = MessageFormat.TEXT;
+        } else {
+            requestedMessageFormat = account.getMessageFormat();
+        }
+
+        boolean shouldStripSignature = account.isStripSignature() &&
+                (action == Action.REPLY || action == Action.REPLY_ALL);
+
+        return QuotedMessageInfoExtractor.getInstance(requestedMessageFormat, shouldStripSignature, quoteStyle,
+                account.getQuotePrefix());
+    }
+
     /**
      * Build and populate the UI with the quoted message.
      *
      * @param showQuotedText
      *         {@code true} if the quoted text should be shown, {@code false} otherwise.
      */
-    public void populateUIWithQuotedMessage(MessageViewInfo messageViewInfo, boolean showQuotedText, Action action)
+    public void populateUIWithQuotedMessage(QuotedMessageInfo messageViewInfo, boolean showQuotedText)
             throws MessagingException {
-        MessageFormat origMessageFormat = account.getMessageFormat();
-
-        if (forcePlainText || origMessageFormat == MessageFormat.TEXT) {
-            // Use plain text for the quoted message
-            quotedTextFormat = SimpleMessageFormat.TEXT;
-        } else if (origMessageFormat == MessageFormat.AUTO) {
-            // Figure out which message format to use for the quoted text by looking if the source
-            // message contains a text/html part. If it does, we use that.
-            quotedTextFormat =
-                    (MimeUtility.findFirstPartByMimeType(messageViewInfo.rootPart, "text/html") == null) ?
-                            SimpleMessageFormat.TEXT : SimpleMessageFormat.HTML;
-        } else {
-            quotedTextFormat = SimpleMessageFormat.HTML;
-        }
-
-        // Handle the original message in the reply
-        // If we already have sourceMessageBody, use that.  It's pre-populated if we've got crypto going on.
-        String content = QuotedMessageHelper.getBodyTextFromMessage(messageViewInfo.rootPart, quotedTextFormat);
-
-        if (quotedTextFormat == SimpleMessageFormat.HTML) {
-            // Strip signature.
-            // closing tags such as </div>, </span>, </table>, </pre> will be cut off.
-            if (account.isStripSignature() && (action == Action.REPLY || action == Action.REPLY_ALL)) {
-                content = QuotedMessageHelper.stripSignatureForHtmlMessage(content);
-            }
-
-            // Add the HTML reply header to the top of the content.
-            quotedHtmlContent = QuotedMessageHelper.quoteOriginalHtmlMessage(
-                    resources, messageViewInfo.message, content, quoteStyle);
-
-            // Load the message with the reply header. TODO replace with MessageViewInfo data
-            view.setQuotedHtml(quotedHtmlContent.getQuotedContent(),
-                    AttachmentResolver.createFromPart(messageViewInfo.rootPart));
-
-            // TODO: Also strip the signature from the text/plain part
-            view.setQuotedText(QuotedMessageHelper.quoteOriginalTextMessage(resources, messageViewInfo.message,
-                    QuotedMessageHelper.getBodyTextFromMessage(messageViewInfo.rootPart, SimpleMessageFormat.TEXT),
-                    quoteStyle, account.getQuotePrefix()));
-
-        } else if (quotedTextFormat == SimpleMessageFormat.TEXT) {
-            if (account.isStripSignature() && (action == Action.REPLY || action == Action.REPLY_ALL)) {
-                content = QuotedMessageHelper.stripSignatureForTextMessage(content);
-            }
-
-            view.setQuotedText(QuotedMessageHelper.quoteOriginalTextMessage(
-                    resources, messageViewInfo.message, content, quoteStyle, account.getQuotePrefix()));
+        view.setQuotedText(messageViewInfo.quotedPlainText);
+        quotedHtmlContent = messageViewInfo.quotedHtmlText;
+        if (quotedHtmlContent != null) {
+            view.setQuotedHtml(quotedHtmlContent.getQuotedContent(), messageViewInfo.attachmentResolver);
         }
 
         if (showQuotedText) {
@@ -166,17 +138,17 @@ public class QuotedMessagePresenter {
                 (QuotedTextMode) savedInstanceState.getSerializable(STATE_KEY_QUOTED_TEXT_MODE));
     }
 
-    public void processMessageToForward(MessageViewInfo messageViewInfo) throws MessagingException {
+    public void processMessageToForward(QuotedMessageInfo messageViewInfo) throws MessagingException {
         quoteStyle = QuoteStyle.HEADER;
-        populateUIWithQuotedMessage(messageViewInfo, true, Action.FORWARD);
+        populateUIWithQuotedMessage(messageViewInfo, true);
     }
 
-    public void initFromReplyToMessage(MessageViewInfo messageViewInfo, Action action)
+    public void initFromReplyToMessage(QuotedMessageInfo messageViewInfo)
             throws MessagingException {
-        populateUIWithQuotedMessage(messageViewInfo, account.isDefaultQuotedTextShown(), action);
+        populateUIWithQuotedMessage(messageViewInfo, account.isDefaultQuotedTextShown());
     }
 
-    public void processDraftMessage(MessageViewInfo messageViewInfo, Map<IdentityField, String> k9identity) {
+    public void processDraftMessage(QuotedMessageInfo messageViewInfo, Map<IdentityField, String> k9identity) {
         quoteStyle = k9identity.get(IdentityField.QUOTE_STYLE) != null
                 ? QuoteStyle.valueOf(k9identity.get(IdentityField.QUOTE_STYLE))
                 : account.getQuoteStyle();

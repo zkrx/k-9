@@ -81,7 +81,7 @@ import com.fsck.k9.mail.MessagingException;
 import com.fsck.k9.mail.internet.MimeMessage;
 import com.fsck.k9.mailstore.LocalMessage;
 import com.fsck.k9.mailstore.MessageViewInfo;
-import com.fsck.k9.mailstore.MessageViewInfoExtractor;
+import com.fsck.k9.mailstore.QuotedMessageInfo;
 import com.fsck.k9.message.ComposePgpInlineDecider;
 import com.fsck.k9.message.IdentityField;
 import com.fsck.k9.message.IdentityHeaderParser;
@@ -151,7 +151,7 @@ public class MessageCompose extends K9Activity implements OnClickListener,
     private static final Pattern PREFIX = Pattern.compile("^AW[:\\s]\\s*", Pattern.CASE_INSENSITIVE);
 
     private QuotedMessagePresenter quotedMessagePresenter;
-    private MessageLoaderHelper messageLoaderHelper;
+    private MessageLoaderHelper<QuotedMessageInfo> messageLoaderHelper;
     private AttachmentPresenter attachmentPresenter;
 
     /**
@@ -464,7 +464,7 @@ public class MessageCompose extends K9Activity implements OnClickListener,
             if (mAction == Action.REPLY || mAction == Action.REPLY_ALL ||
                     mAction == Action.FORWARD || mAction == Action.EDIT_DRAFT) {
                 messageLoaderHelper = new MessageLoaderHelper<>(this, getLoaderManager(), getFragmentManager(),
-                        messageLoaderCallbacks, MessageViewInfoExtractor.getInstance());
+                        messageLoaderCallbacks, quotedMessagePresenter.getQuotedMessageInfoExtractor(mAction));
                 mHandler.sendEmptyMessage(MSG_PROGRESS_ON);
 
                 Parcelable cachedDecryptionResult = intent.getParcelableExtra(EXTRA_MESSAGE_DECRYPTION_RESULT);
@@ -1143,7 +1143,7 @@ public class MessageCompose extends K9Activity implements OnClickListener,
      * @param messageViewInfo
      *         The source message used to populate the various text fields.
      */
-    private void processSourceMessage(MessageViewInfo messageViewInfo) {
+    private void processSourceMessage(QuotedMessageInfo messageViewInfo) {
         try {
             switch (mAction) {
                 case REPLY:
@@ -1178,7 +1178,7 @@ public class MessageCompose extends K9Activity implements OnClickListener,
         updateMessageFormat();
     }
 
-    private void processMessageToReplyTo(MessageViewInfo messageViewInfo) throws MessagingException {
+    private void processMessageToReplyTo(QuotedMessageInfo messageViewInfo) throws MessagingException {
         Message message = messageViewInfo.message;
 
         if (message.getSubject() != null) {
@@ -1217,7 +1217,7 @@ public class MessageCompose extends K9Activity implements OnClickListener,
         }
 
         // Quote the message and setup the UI.
-        quotedMessagePresenter.initFromReplyToMessage(messageViewInfo, mAction);
+        quotedMessagePresenter.initFromReplyToMessage(messageViewInfo);
 
         if (mAction == Action.REPLY || mAction == Action.REPLY_ALL) {
             Identity useIdentity = IdentityHelper.getRecipientIdentityFromMessage(mAccount, message);
@@ -1229,7 +1229,7 @@ public class MessageCompose extends K9Activity implements OnClickListener,
 
     }
 
-    private void processMessageToForward(MessageViewInfo messageViewInfo) throws MessagingException {
+    private void processMessageToForward(QuotedMessageInfo messageViewInfo) throws MessagingException {
         Message message = messageViewInfo.message;
 
         String subject = message.getSubject();
@@ -1257,7 +1257,7 @@ public class MessageCompose extends K9Activity implements OnClickListener,
         attachmentPresenter.processMessageToForward(messageViewInfo);
     }
 
-    private void processDraftMessage(MessageViewInfo messageViewInfo) {
+    private void processDraftMessage(QuotedMessageInfo messageViewInfo) {
         Message message = messageViewInfo.message;
         mDraftId = MessagingController.getInstance(getApplication()).getId(message);
         mSubjectView.setText(message.getSubject());
@@ -1520,14 +1520,14 @@ public class MessageCompose extends K9Activity implements OnClickListener,
         }
     }
 
-    public void loadLocalMessageForDisplay(MessageViewInfo messageViewInfo, Action action) {
+    public void loadLocalMessageForDisplay(QuotedMessageInfo messageViewInfo, Action action) {
         // We check to see if we've previously processed the source message since this
         // could be called when switching from HTML to text replies. If that happens, we
         // only want to update the UI with quoted text (which picks the appropriate
         // part).
         if (mSourceMessageProcessed) {
             try {
-                quotedMessagePresenter.populateUIWithQuotedMessage(messageViewInfo, true, action);
+                quotedMessagePresenter.populateUIWithQuotedMessage(messageViewInfo, true);
             } catch (MessagingException e) {
                 // Hm, if we couldn't populate the UI after source reprocessing, let's just delete it?
                 quotedMessagePresenter.showOrHideQuotedText(QuotedTextMode.HIDE);
@@ -1540,8 +1540,8 @@ public class MessageCompose extends K9Activity implements OnClickListener,
         }
     }
 
-    private MessageLoaderCallbacks<MessageViewInfo> messageLoaderCallbacks =
-            new MessageLoaderCallbacks<MessageViewInfo>() {
+    private MessageLoaderCallbacks<QuotedMessageInfo> messageLoaderCallbacks =
+            new MessageLoaderCallbacks<QuotedMessageInfo>() {
         @Override
         public void onMessageDataLoadFinished(LocalMessage message) {
             // nothing to do here, we don't care about message headers
@@ -1554,7 +1554,7 @@ public class MessageCompose extends K9Activity implements OnClickListener,
         }
 
         @Override
-        public void onMessageViewInfoLoadFinished(MessageViewInfo messageViewInfo) {
+        public void onMessageViewInfoLoadFinished(QuotedMessageInfo messageViewInfo) {
             mHandler.sendEmptyMessage(MSG_PROGRESS_OFF);
             loadLocalMessageForDisplay(messageViewInfo, mAction);
         }

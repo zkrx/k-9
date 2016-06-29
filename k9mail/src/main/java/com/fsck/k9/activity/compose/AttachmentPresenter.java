@@ -28,7 +28,7 @@ import com.fsck.k9.mail.Part;
 import com.fsck.k9.mail.internet.MimeUtility;
 import com.fsck.k9.mailstore.AttachmentViewInfo;
 import com.fsck.k9.mailstore.LocalBodyPart;
-import com.fsck.k9.mailstore.MessageViewInfo;
+import com.fsck.k9.mailstore.QuotedMessageInfo;
 import com.fsck.k9.provider.AttachmentProvider;
 
 
@@ -158,7 +158,7 @@ public class AttachmentPresenter {
         addAttachmentAndStartLoader(attachment);
     }
 
-    public void processMessageToForward(MessageViewInfo messageViewInfo) {
+    public void processMessageToForward(QuotedMessageInfo messageViewInfo) {
         if (messageViewInfo.message.isSet(Flag.X_DOWNLOADED_PARTIAL)) {
             attachmentMvpView.showMissingAttachmentsPartialMessageWarning();
             return;
