@@ -28,6 +28,7 @@ import com.fsck.k9.ui.crypto.MessageCryptoAnnotations;
 import com.fsck.k9.ui.crypto.MessageCryptoCallback;
 import com.fsck.k9.ui.crypto.MessageCryptoHelper;
 import com.fsck.k9.ui.message.LocalMessageExtractorLoader;
+import com.fsck.k9.ui.message.LocalMessageExtractorLoader.MessageInfoExtractor;
 import com.fsck.k9.ui.message.LocalMessageLoader;
 import org.openintents.openpgp.OpenPgpDecryptionResult;
 
@@ -66,7 +67,7 @@ import org.openintents.openpgp.OpenPgpDecryptionResult;
  * consistency, reloading if there is a mismatch.
  *
  */
-public class MessageLoaderHelper {
+public class MessageLoaderHelper<T> {
     private static final int LOCAL_MESSAGE_LOADER_ID = 1;
     private static final int DECODE_MESSAGE_LOADER_ID = 2;
 
@@ -76,7 +77,7 @@ public class MessageLoaderHelper {
     private FragmentManager fragmentManager;
     private LoaderManager loaderManager;
     @Nullable // make this explicitly nullable, make sure to cancel/ignore any operation if this is null
-    private MessageLoaderCallbacks callback;
+    private MessageLoaderCallbacks<T> callback;
 
 
     // transient state
@@ -88,10 +89,11 @@ public class MessageLoaderHelper {
     private OpenPgpDecryptionResult cachedDecryptionResult;
 
     private MessageCryptoHelper messageCryptoHelper;
+    private MessageInfoExtractor<T> messageInfoExtractor;
 
 
     public MessageLoaderHelper(Context context, LoaderManager loaderManager, FragmentManager fragmentManager,
-            @NonNull MessageLoaderCallbacks callback) {
+            @NonNull MessageLoaderCallbacks<T> callback) {
         this.context = context;
         this.loaderManager = loaderManager;
         this.fragmentManager = fragmentManager;
@@ -319,9 +321,16 @@ public class MessageLoaderHelper {
     // decode message
 
     private void startOrResumeDecodeMessage() {
-        LocalMessageExtractorLoader loader =
-                (LocalMessageExtractorLoader) loaderManager.<MessageViewInfo>getLoader(DECODE_MESSAGE_LOADER_ID);
-        boolean isLoaderStale = (loader == null) || !loader.isCreatedFor(localMessage, messageCryptoAnnotations);
+        if (callback == null) {
+            throw new IllegalStateException("unexpected call when callback is already detached");
+        }
+
+        messageInfoExtractor = callback.getMessageInfoExtractor();
+
+        LocalMessageExtractorLoader<T> loader =
+                (LocalMessageExtractorLoader<T>) loaderManager.getLoader(DECODE_MESSAGE_LOADER_ID);
+        boolean isLoaderStale = (loader == null) || !loader.isCreatedFor(
+                messageInfoExtractor, localMessage, messageCryptoAnnotations);
 
         if (isLoaderStale) {
             Log.d(K9.LOG_TAG, "Creating new decode message loader");
@@ -332,49 +341,44 @@ public class MessageLoaderHelper {
         }
     }
 
-    private void onDecodeMessageFinished(MessageViewInfo messageViewInfo) {
+    private void onDecodeMessageFinished(T decodedMessageInfo) {
         if (callback == null) {
             throw new IllegalStateException("unexpected call when callback is already detached");
         }
 
-        if (messageViewInfo == null) {
-            messageViewInfo = createErrorStateMessageViewInfo();
+        if (decodedMessageInfo == null) {
+            MessageViewInfo messageViewInfo = MessageViewInfo.createWithErrorState(localMessage, true);
             callback.onMessageViewInfoLoadFailed(messageViewInfo);
             return;
         }
 
-        callback.onMessageViewInfoLoadFinished(messageViewInfo);
-    }
-
-    @NonNull
-    private MessageViewInfo createErrorStateMessageViewInfo() {
-        boolean isMessageIncomplete = !localMessage.isSet(Flag.X_DOWNLOADED_FULL);
-        return MessageViewInfo.createWithErrorState(localMessage, isMessageIncomplete);
+        callback.onMessageViewInfoLoadFinished(decodedMessageInfo);
     }
 
     private void cancelAndClearDecodeLoader() {
         loaderManager.destroyLoader(DECODE_MESSAGE_LOADER_ID);
     }
 
-    private LoaderCallbacks<MessageViewInfo> decodeMessageLoaderCallback = new LoaderCallbacks<MessageViewInfo>() {
+    private LoaderCallbacks<T> decodeMessageLoaderCallback = new LoaderCallbacks<T>() {
         @Override
-        public Loader<MessageViewInfo> onCreateLoader(int id, Bundle args) {
+        public Loader<T> onCreateLoader(int id, Bundle args) {
             if (id != DECODE_MESSAGE_LOADER_ID) {
                 throw new IllegalStateException("loader id must be message decoder id");
             }
-            return new LocalMessageExtractorLoader(context, localMessage, messageCryptoAnnotations);
+            return new LocalMessageExtractorLoader<>(
+                    context, messageInfoExtractor, localMessage, messageCryptoAnnotations);
         }
 
         @Override
-        public void onLoadFinished(Loader<MessageViewInfo> loader, MessageViewInfo messageViewInfo) {
+        public void onLoadFinished(Loader<T> loader, T decodedMessageInfo) {
             if (loader.getId() != DECODE_MESSAGE_LOADER_ID) {
                 throw new IllegalStateException("loader id must be message decoder id");
             }
-            onDecodeMessageFinished(messageViewInfo);
+            onDecodeMessageFinished(decodedMessageInfo);
         }
 
         @Override
-        public void onLoaderReset(Loader<MessageViewInfo> loader) {
+        public void onLoaderReset(Loader<T> loader) {
             if (loader.getId() != DECODE_MESSAGE_LOADER_ID) {
                 throw new IllegalStateException("loader id must be message decoder id");
             }
@@ -437,11 +441,11 @@ public class MessageLoaderHelper {
 
     // callback interface
 
-    public interface MessageLoaderCallbacks {
+    public interface MessageLoaderCallbacks<T> {
         void onMessageDataLoadFinished(LocalMessage message);
         void onMessageDataLoadFailed();
 
-        void onMessageViewInfoLoadFinished(MessageViewInfo messageViewInfo);
+        void onMessageViewInfoLoadFinished(T messageViewInfo);
         void onMessageViewInfoLoadFailed(MessageViewInfo messageViewInfo);
 
         void setLoadingProgress(int current, int max);
@@ -451,6 +455,7 @@ public class MessageLoaderHelper {
 
         void onDownloadErrorMessageNotFound();
         void onDownloadErrorNetworkError();
-    }
 
+        MessageInfoExtractor<T> getMessageInfoExtractor();
+    }
 }

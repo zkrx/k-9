@@ -25,6 +25,7 @@ import com.fsck.k9.message.extractors.AttachmentInfoExtractor;
 import com.fsck.k9.ui.crypto.MessageCryptoAnnotations;
 import com.fsck.k9.ui.crypto.MessageCryptoSplitter;
 import com.fsck.k9.ui.crypto.MessageCryptoSplitter.CryptoMessageParts;
+import com.fsck.k9.ui.message.LocalMessageExtractorLoader.MessageInfoExtractor;
 
 import static com.fsck.k9.mail.internet.MimeUtility.getHeaderParameter;
 import static com.fsck.k9.mail.internet.Viewable.Alternative;
@@ -33,7 +34,7 @@ import static com.fsck.k9.mail.internet.Viewable.MessageHeader;
 import static com.fsck.k9.mail.internet.Viewable.Text;
 import static com.fsck.k9.mail.internet.Viewable.Textual;
 
-public class MessageViewInfoExtractor {
+public class MessageViewInfoExtractor implements MessageInfoExtractor<MessageViewInfo> {
     private static final String TEXT_DIVIDER =
             "------------------------------------------------------------------------";
     private static final int TEXT_DIVIDER_LENGTH = TEXT_DIVIDER.length();
@@ -41,6 +42,7 @@ public class MessageViewInfoExtractor {
     private static final int FILENAME_PREFIX_LENGTH = FILENAME_PREFIX.length();
     private static final String FILENAME_SUFFIX = " ";
     private static final int FILENAME_SUFFIX_LENGTH = FILENAME_SUFFIX.length();
+
 
 
     private final Context context;
@@ -64,7 +66,7 @@ public class MessageViewInfoExtractor {
     }
 
     @WorkerThread
-    public MessageViewInfo extractMessageForView(Message message, MessageCryptoAnnotations annotations)
+    public MessageViewInfo extractMessageInfo(Message message, MessageCryptoAnnotations annotations)
             throws MessagingException {
         Part rootPart;
         CryptoResultAnnotation cryptoResultAnnotation;
@@ -306,7 +308,7 @@ public class MessageViewInfoExtractor {
      *
      * @return The (file)name of the part if available. An empty string, otherwise.
      */
-    private static String getPartName(Part part) {
+    private String getPartName(Part part) {
         String disposition = part.getDisposition();
         if (disposition != null) {
             String name = getHeaderParameter(disposition, "filename");
@@ -473,7 +475,7 @@ public class MessageViewInfoExtractor {
      * @param value
      *         The string to be put in the {@code TD} element.
      */
-    private static void addTableRow(StringBuilder html, String header, String value) {
+    private void addTableRow(StringBuilder html, String header, String value) {
         html.append("<tr><th style=\"text-align: left; vertical-align: top;\">");
         html.append(header);
         html.append("</th>");

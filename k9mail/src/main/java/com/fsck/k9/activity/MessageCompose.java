@@ -81,6 +81,7 @@ import com.fsck.k9.mail.MessagingException;
 import com.fsck.k9.mail.internet.MimeMessage;
 import com.fsck.k9.mailstore.LocalMessage;
 import com.fsck.k9.mailstore.MessageViewInfo;
+import com.fsck.k9.mailstore.MessageViewInfoExtractor;
 import com.fsck.k9.message.ComposePgpInlineDecider;
 import com.fsck.k9.message.IdentityField;
 import com.fsck.k9.message.IdentityHeaderParser;
@@ -92,6 +93,7 @@ import com.fsck.k9.message.SimpleMessageFormat;
 import com.fsck.k9.ui.EolConvertingEditText;
 import com.fsck.k9.ui.compose.QuotedMessageMvpView;
 import com.fsck.k9.ui.compose.QuotedMessagePresenter;
+import com.fsck.k9.ui.message.LocalMessageExtractorLoader.MessageInfoExtractor;
 
 
 @SuppressWarnings("deprecation")
@@ -462,7 +464,7 @@ public class MessageCompose extends K9Activity implements OnClickListener,
         if (!mSourceMessageProcessed) {
             if (mAction == Action.REPLY || mAction == Action.REPLY_ALL ||
                     mAction == Action.FORWARD || mAction == Action.EDIT_DRAFT) {
-                messageLoaderHelper = new MessageLoaderHelper(this, getLoaderManager(), getFragmentManager(),
+                messageLoaderHelper = new MessageLoaderHelper<>(this, getLoaderManager(), getFragmentManager(),
                         messageLoaderCallbacks);
                 mHandler.sendEmptyMessage(MSG_PROGRESS_ON);
 
@@ -1132,7 +1134,7 @@ public class MessageCompose extends K9Activity implements OnClickListener,
             throw new IllegalStateException("tried to edit quoted message with no referenced message");
         }
 
-        messageLoaderHelper.asyncStartOrResumeLoadingMessage(mMessageReference, null);
+        messageLoaderHelper.asyncReloadMessage();
     }
 
     /**
@@ -1539,7 +1541,8 @@ public class MessageCompose extends K9Activity implements OnClickListener,
         }
     }
 
-    private MessageLoaderCallbacks messageLoaderCallbacks = new MessageLoaderCallbacks() {
+    private MessageLoaderCallbacks<MessageViewInfo> messageLoaderCallbacks =
+            new MessageLoaderCallbacks<MessageViewInfo>() {
         @Override
         public void onMessageDataLoadFinished(LocalMessage message) {
             // nothing to do here, we don't care about message headers
@@ -1597,6 +1600,11 @@ public class MessageCompose extends K9Activity implements OnClickListener,
                     Toast.makeText(MessageCompose.this, R.string.status_network_error, Toast.LENGTH_LONG).show();
                 }
             });
+        }
+
+        @Override
+        public MessageInfoExtractor<MessageViewInfo> getMessageInfoExtractor() {
+            return MessageViewInfoExtractor.getInstance();
         }
     };
 

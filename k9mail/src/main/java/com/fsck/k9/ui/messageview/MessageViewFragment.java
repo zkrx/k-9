@@ -46,6 +46,8 @@ import com.fsck.k9.mail.Flag;
 import com.fsck.k9.mailstore.AttachmentViewInfo;
 import com.fsck.k9.mailstore.LocalMessage;
 import com.fsck.k9.mailstore.MessageViewInfo;
+import com.fsck.k9.mailstore.MessageViewInfoExtractor;
+import com.fsck.k9.ui.message.LocalMessageExtractorLoader.MessageInfoExtractor;
 import com.fsck.k9.ui.messageview.CryptoInfoDialog.OnClickShowCryptoKeyListener;
 import com.fsck.k9.ui.messageview.MessageCryptoPresenter.MessageCryptoMvpView;
 import com.fsck.k9.view.MessageCryptoDisplayStatus;
@@ -82,7 +84,7 @@ public class MessageViewFragment extends Fragment implements ConfirmationDialogF
     private MessagingController mController;
     private DownloadManager downloadManager;
     private Handler handler = new Handler();
-    private MessageLoaderHelper messageLoaderHelper;
+    private MessageLoaderHelper<MessageViewInfo> messageLoaderHelper;
     private MessageCryptoPresenter messageCryptoPresenter;
 
     /**
@@ -129,8 +131,8 @@ public class MessageViewFragment extends Fragment implements ConfirmationDialogF
         mController = MessagingController.getInstance(context);
         downloadManager = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
         messageCryptoPresenter = new MessageCryptoPresenter(savedInstanceState, messageCryptoMvpView);
-        messageLoaderHelper =
-                new MessageLoaderHelper(context, getLoaderManager(), getFragmentManager(), messageLoaderCallbacks);
+        messageLoaderHelper = new MessageLoaderHelper<>(context, getLoaderManager(), getFragmentManager(),
+                messageLoaderCallbacks);
         mInitialized = true;
     }
 
@@ -707,7 +709,9 @@ public class MessageViewFragment extends Fragment implements ConfirmationDialogF
     }
 
 
-    private MessageLoaderCallbacks messageLoaderCallbacks = new MessageLoaderCallbacks() {
+
+    private MessageLoaderCallbacks<MessageViewInfo> messageLoaderCallbacks =
+            new MessageLoaderCallbacks<MessageViewInfo>() {
         @Override
         public void onMessageDataLoadFinished(LocalMessage message) {
             mMessage = message;
@@ -768,6 +772,12 @@ public class MessageViewFragment extends Fragment implements ConfirmationDialogF
             } catch (SendIntentException e) {
                 Log.e(K9.LOG_TAG, "Irrecoverable error calling PendingIntent!", e);
             }
+        }
+
+
+        @Override
+        public MessageInfoExtractor<MessageViewInfo> getMessageInfoExtractor() {
+            return MessageViewInfoExtractor.getInstance();
         }
     };
 
