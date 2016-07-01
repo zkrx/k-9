@@ -93,7 +93,6 @@ import com.fsck.k9.message.SimpleMessageFormat;
 import com.fsck.k9.ui.EolConvertingEditText;
 import com.fsck.k9.ui.compose.QuotedMessageMvpView;
 import com.fsck.k9.ui.compose.QuotedMessagePresenter;
-import com.fsck.k9.ui.message.LocalMessageExtractorLoader.MessageInfoExtractor;
 
 
 @SuppressWarnings("deprecation")
@@ -465,7 +464,7 @@ public class MessageCompose extends K9Activity implements OnClickListener,
             if (mAction == Action.REPLY || mAction == Action.REPLY_ALL ||
                     mAction == Action.FORWARD || mAction == Action.EDIT_DRAFT) {
                 messageLoaderHelper = new MessageLoaderHelper<>(this, getLoaderManager(), getFragmentManager(),
-                        messageLoaderCallbacks);
+                        messageLoaderCallbacks, MessageViewInfoExtractor.getInstance());
                 mHandler.sendEmptyMessage(MSG_PROGRESS_ON);
 
                 Parcelable cachedDecryptionResult = intent.getParcelableExtra(EXTRA_MESSAGE_DECRYPTION_RESULT);
@@ -1600,11 +1599,6 @@ public class MessageCompose extends K9Activity implements OnClickListener,
                     Toast.makeText(MessageCompose.this, R.string.status_network_error, Toast.LENGTH_LONG).show();
                 }
             });
-        }
-
-        @Override
-        public MessageInfoExtractor<MessageViewInfo> getMessageInfoExtractor() {
-            return MessageViewInfoExtractor.getInstance();
         }
     };
 

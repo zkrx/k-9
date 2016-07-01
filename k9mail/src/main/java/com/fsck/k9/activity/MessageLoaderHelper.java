@@ -76,6 +76,7 @@ public class MessageLoaderHelper<T> {
     private Context context;
     private FragmentManager fragmentManager;
     private LoaderManager loaderManager;
+    private MessageInfoExtractor<T> messageInfoExtractor;
     @Nullable // make this explicitly nullable, make sure to cancel/ignore any operation if this is null
     private MessageLoaderCallbacks<T> callback;
 
@@ -89,15 +90,15 @@ public class MessageLoaderHelper<T> {
     private OpenPgpDecryptionResult cachedDecryptionResult;
 
     private MessageCryptoHelper messageCryptoHelper;
-    private MessageInfoExtractor<T> messageInfoExtractor;
 
 
     public MessageLoaderHelper(Context context, LoaderManager loaderManager, FragmentManager fragmentManager,
-            @NonNull MessageLoaderCallbacks<T> callback) {
+            @NonNull MessageLoaderCallbacks<T> callback, @NonNull MessageInfoExtractor<T> messageInfoExtractor) {
         this.context = context;
         this.loaderManager = loaderManager;
         this.fragmentManager = fragmentManager;
         this.callback = callback;
+        this.messageInfoExtractor = messageInfoExtractor;
     }
 
 
@@ -325,8 +326,6 @@ public class MessageLoaderHelper<T> {
             throw new IllegalStateException("unexpected call when callback is already detached");
         }
 
-        messageInfoExtractor = callback.getMessageInfoExtractor();
-
         LocalMessageExtractorLoader<T> loader =
                 (LocalMessageExtractorLoader<T>) loaderManager.getLoader(DECODE_MESSAGE_LOADER_ID);
         boolean isLoaderStale = (loader == null) || !loader.isCreatedFor(
@@ -455,7 +454,5 @@ public class MessageLoaderHelper<T> {
 
         void onDownloadErrorMessageNotFound();
         void onDownloadErrorNetworkError();
-
-        MessageInfoExtractor<T> getMessageInfoExtractor();
     }
 }

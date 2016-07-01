@@ -132,7 +132,7 @@ public class MessageViewFragment extends Fragment implements ConfirmationDialogF
         downloadManager = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
         messageCryptoPresenter = new MessageCryptoPresenter(savedInstanceState, messageCryptoMvpView);
         messageLoaderHelper = new MessageLoaderHelper<>(context, getLoaderManager(), getFragmentManager(),
-                messageLoaderCallbacks);
+                messageLoaderCallbacks, MessageViewInfoExtractor.getInstance());
         mInitialized = true;
     }
 
@@ -772,12 +772,6 @@ public class MessageViewFragment extends Fragment implements ConfirmationDialogF
             } catch (SendIntentException e) {
                 Log.e(K9.LOG_TAG, "Irrecoverable error calling PendingIntent!", e);
             }
-        }
-
-
-        @Override
-        public MessageInfoExtractor<MessageViewInfo> getMessageInfoExtractor() {
-            return MessageViewInfoExtractor.getInstance();
         }
     };
 
