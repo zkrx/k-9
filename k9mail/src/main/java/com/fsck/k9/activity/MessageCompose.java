@@ -1252,15 +1252,15 @@ public class MessageCompose extends K9Activity implements OnClickListener,
         recipientPresenter.initFromDraftMessage(message);
 
         // Read In-Reply-To header from draft
-        final String[] inReplyTo = message.getUnparsedHeader("In-Reply-To");
-        if (inReplyTo.length >= 1) {
-            repliedToMessageId = inReplyTo[0];
+        String inReplyTo = message.getUnparsedFirstHeader("In-Reply-To");
+        if (inReplyTo != null) {
+            repliedToMessageId = inReplyTo;
         }
 
         // Read References header from draft
-        final String[] references = message.getUnparsedHeader("References");
-        if (references.length >= 1) {
-            referencedMessageIds = references[0];
+        String references = message.getUnparsedFirstHeader("References");
+        if (references != null) {
+            referencedMessageIds = references;
         }
 
         if (!relatedMessageProcessed) {

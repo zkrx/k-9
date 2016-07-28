@@ -16,6 +16,7 @@ import java.util.Set;
 import java.util.TimeZone;
 
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 
 import com.fsck.k9.mail.Address;
 import com.fsck.k9.mail.Body;
@@ -399,6 +400,16 @@ public class MimeMessage extends Message {
     @Override
     public String[] getUnparsedHeader(String name) {
         return mHeader.getHeader(name);
+    }
+
+    @Nullable
+    @Override
+    public String getUnparsedFirstHeader(String name) {
+        String[] headers = getUnparsedHeader(name);
+        if (headers.length > 0) {
+            return headers[0];
+        }
+        return null;
     }
 
     @Override

@@ -57,7 +57,7 @@ public class MimeMessageParseTest {
                 "\r\n" +
                 "Body"));
 
-        assertEquals("<adam@example.org>", msg.getUnparsedHeader("From")[0]);
+        assertEquals("<adam@example.org>", msg.getUnparsedFirstHeader("From"));
     }
 
     @Test

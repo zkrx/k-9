@@ -1604,9 +1604,9 @@ public class LocalFolder extends Folder<LocalMessage> implements Serializable {
     }
 
     private String getTransferEncoding(Part part) {
-        String[] contentTransferEncoding = part.getUnparsedHeader(MimeHeader.HEADER_CONTENT_TRANSFER_ENCODING);
-        if (contentTransferEncoding.length > 0) {
-            return contentTransferEncoding[0].toLowerCase(Locale.US);
+        String contentTransferEncoding = part.getUnparsedFirstHeader(MimeHeader.HEADER_CONTENT_TRANSFER_ENCODING);
+        if (contentTransferEncoding != null) {
+            return contentTransferEncoding.toLowerCase(Locale.US);
         }
 
         return MimeUtil.ENC_7BIT;

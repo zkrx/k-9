@@ -12,6 +12,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 
 
 /**
@@ -66,6 +67,16 @@ public class MimeBodyPart extends BodyPart {
     @Override
     public String[] getUnparsedHeader(String name) {
         return mHeader.getHeader(name);
+    }
+
+    @Nullable
+    @Override
+    public String getUnparsedFirstHeader(String name) {
+        String[] header = getUnparsedHeader(name);
+        if (header.length > 0) {
+            return header[0];
+        }
+        return null;
     }
 
     @Override

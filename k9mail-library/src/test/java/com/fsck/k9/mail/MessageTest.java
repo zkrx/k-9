@@ -1,6 +1,5 @@
 package com.fsck.k9.mail;
 
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -235,14 +234,14 @@ public class MessageTest {
     public void testSetSendDateFormatsHeaderCorrectlyWithCurrentTimeZone() throws Exception {
         Message message = sampleMessage();
         message.setSentDate(new Date(0), false);
-        assertEquals("Thu, 01 Jan 1970 09:00:00 +0900", message.getUnparsedHeader("Date")[0]);
+        assertEquals("Thu, 01 Jan 1970 09:00:00 +0900", message.getUnparsedFirstHeader("Date"));
     }
 
     @Test
     public void testSetSendDateFormatsHeaderCorrectlyWithoutTimeZone() throws Exception {
         Message message = sampleMessage();
         message.setSentDate(new Date(0), true);
-        assertEquals("Thu, 01 Jan 1970 00:00:00 +0000", message.getUnparsedHeader("Date")[0]);
+        assertEquals("Thu, 01 Jan 1970 00:00:00 +0000", message.getUnparsedFirstHeader("Date"));
     }
 
     @Test

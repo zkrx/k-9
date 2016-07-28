@@ -22,10 +22,8 @@ class FetchPartCallback implements ImapResponseCallback {
                 ImapResponseParser.equalsIgnoreCase(response.get(1), "FETCH")) {
             //TODO: check for correct UID
 
-            String contentTransferEncoding = mPart
-                    .getUnparsedHeader(MimeHeader.HEADER_CONTENT_TRANSFER_ENCODING)[0];
-            String contentType = mPart
-                    .getUnparsedHeader(MimeHeader.HEADER_CONTENT_TYPE)[0];
+            String contentTransferEncoding = mPart.getUnparsedFirstHeader(MimeHeader.HEADER_CONTENT_TRANSFER_ENCODING);
+            String contentType = mPart.getUnparsedFirstHeader(MimeHeader.HEADER_CONTENT_TYPE);
 
             return MimeUtility.createBody(literal, contentTransferEncoding, contentType);
         }
