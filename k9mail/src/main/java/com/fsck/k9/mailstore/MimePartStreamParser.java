@@ -18,6 +18,10 @@ import com.fsck.k9.mail.internet.MimeMultipart;
 import com.fsck.k9.mailstore.util.FileFactory;
 import org.apache.commons.io.IOUtils;
 import org.apache.james.mime4j.MimeException;
+import org.apache.james.mime4j.codec.DecodeMonitor;
+import org.apache.james.mime4j.dom.field.ContentDispositionField;
+import org.apache.james.mime4j.dom.field.FieldName;
+import org.apache.james.mime4j.field.DefaultFieldParser;
 import org.apache.james.mime4j.io.EOLConvertingInputStream;
 import org.apache.james.mime4j.parser.ContentHandler;
 import org.apache.james.mime4j.parser.MimeStreamParser;
@@ -37,7 +41,7 @@ public class MimePartStreamParser {
         parserConfig.setMaxHeaderCount(-1);
 
         MimeStreamParser parser = new MimeStreamParser(parserConfig);
-        parser.setContentHandler(new PartBuilder(fileFactory, parsedRootPart));
+        parser.setContentHandler(new PartBuilder(parser, fileFactory, parsedRootPart));
         parser.setRecurse();
 
         try {
@@ -49,8 +53,8 @@ public class MimePartStreamParser {
         return parsedRootPart;
     }
 
-    private static Body createBody(InputStream inputStream, String transferEncoding,
-            FileFactory fileFactory) throws IOException {
+    private static Body createBody(InputStream inputStream, String transferEncoding, FileFactory fileFactory)
+            throws IOException {
         DeferredFileBody body = new DeferredFileBody(fileFactory, transferEncoding);
         OutputStream outputStream = body.getOutputStream();
         try {
@@ -67,9 +71,11 @@ public class MimePartStreamParser {
         private final FileFactory fileFactory;
         private final MimeBodyPart decryptedRootPart;
         private final Stack<Object> stack = new Stack<>();
+        private final MimeStreamParser mimeStreamParser;
 
-        public PartBuilder(FileFactory fileFactory, MimeBodyPart decryptedRootPart)
+        public PartBuilder(MimeStreamParser mimeStreamParser, FileFactory fileFactory, MimeBodyPart decryptedRootPart)
                 throws MessagingException {
+            this.mimeStreamParser = mimeStreamParser;
             this.fileFactory = fileFactory;
             this.decryptedRootPart = decryptedRootPart;
         }
@@ -119,6 +125,12 @@ public class MimePartStreamParser {
 
         @Override
         public void field(Field parsedField) throws MimeException {
+            if (FieldName.CONTENT_DISPOSITION.equalsIgnoreCase(parsedField.getName())) {
+                parsedField = DefaultFieldParser.getParser().parse(parsedField, DecodeMonitor.SILENT);
+                if (parsedField instanceof ContentDispositionField) {
+                    mimeStreamParser.setFlat();
+                }
+            }
             String name = parsedField.getName();
             String raw = parsedField.getRaw().toString();
 
@@ -170,6 +182,8 @@ public class MimePartStreamParser {
             Body body = createBody(inputStream, transferEncoding, fileFactory);
 
             part.setBody(body);
+
+            mimeStreamParser.setRecurse();
         }
 
         @Override
