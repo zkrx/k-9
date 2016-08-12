@@ -514,14 +514,6 @@ public class LocalMessage extends MimeMessage {
     }
 
     @Override
-    protected void copy(MimeMessage destination) {
-        super.copy(destination);
-        if (destination instanceof LocalMessage) {
-            ((LocalMessage)destination).mReference = mReference;
-        }
-    }
-
-    @Override
     public LocalFolder getFolder() {
         return (LocalFolder) super.getFolder();
     }

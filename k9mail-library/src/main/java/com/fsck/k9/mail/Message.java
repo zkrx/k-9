@@ -210,18 +210,4 @@ public abstract class Message implements Part, CompositeBody {
         }
         return 0;
     }
-
-    /**
-     * Copy the contents of this object into another {@code Message} object.
-     *
-     * @param destination The {@code Message} object to receive the contents of this instance.
-     */
-    protected void copy(Message destination) {
-        destination.mUid = mUid;
-        destination.mInternalDate = mInternalDate;
-        destination.mFolder = mFolder;
-
-        // mFlags contents can change during the object lifetime, so copy the Set
-        destination.mFlags = EnumSet.copyOf(mFlags);
-    }
 }
