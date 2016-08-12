@@ -494,19 +494,6 @@ public class LocalMessage extends MimeMessage {
         db.delete("threads", "message_id = ?", idArg);
     }
 
-    @Override
-    public LocalMessage clone() {
-        LocalMessage message = new LocalMessage(this.localStore);
-        super.copy(message);
-
-        message.mId = mId;
-        message.mAttachmentCount = mAttachmentCount;
-        message.mSubject = mSubject;
-        message.mPreview = mPreview;
-
-        return message;
-    }
-
     public long getThreadId() {
         return mThreadId;
     }

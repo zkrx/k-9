@@ -642,13 +642,6 @@ public class MimeMessage extends Message {
     }
 
     @Override
-    public MimeMessage clone() {
-        MimeMessage message = new MimeMessage();
-        copy(message);
-        return message;
-    }
-
-    @Override
     public long getId() {
         return Long.parseLong(mUid); //or maybe .mMessageId?
     }
