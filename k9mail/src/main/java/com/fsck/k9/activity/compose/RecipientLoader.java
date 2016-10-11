@@ -15,7 +15,9 @@ import android.provider.ContactsContract;
 import android.provider.ContactsContract.CommonDataKinds.Email;
 import android.provider.ContactsContract.Contacts;
 import android.provider.ContactsContract.Contacts.Data;
+import android.util.Log;
 
+import com.fsck.k9.K9;
 import com.fsck.k9.R;
 import com.fsck.k9.mail.Address;
 import com.fsck.k9.view.RecipientSelectView.Recipient;
@@ -131,7 +133,7 @@ public class RecipientLoader extends AsyncTaskLoader<List<Recipient>> {
             // TODO actually query contacts - not sure if this is possible in a single query tho :(
             Recipient recipient = new Recipient(address);
             recipients.add(recipient);
-            recipientMap.put(address.getAddress(), recipient);
+            recipientMap.put(address.getAddress().toLowerCase(), recipient);
         }
     }
 
@@ -243,7 +245,7 @@ public class RecipientLoader extends AsyncTaskLoader<List<Recipient>> {
                 Uri photoUri = cursor.isNull(INDEX_PHOTO_URI) ? null : Uri.parse(cursor.getString(INDEX_PHOTO_URI));
 
                 recipient.photoThumbnailUri = photoUri;
-                recipientMap.put(email, recipient);
+                recipientMap.put(email.toLowerCase(), recipient);
                 recipients.add(recipient);
             }
         }
@@ -277,21 +279,23 @@ public class RecipientLoader extends AsyncTaskLoader<List<Recipient>> {
 
             for (Address address : Address.parseUnencoded(email)) {
                 String emailAddress = address.getAddress();
-                if (recipientMap.containsKey(emailAddress)) {
-                    Recipient recipient = recipientMap.get(emailAddress);
-                    switch (status) {
-                        case CRYPTO_PROVIDER_STATUS_UNTRUSTED: {
-                            if (recipient.getCryptoStatus() == RecipientCryptoStatus.UNAVAILABLE) {
-                                recipient.setCryptoStatus(RecipientCryptoStatus.AVAILABLE_UNTRUSTED);
-                            }
-                            break;
+                Recipient recipient = recipientMap.get(emailAddress.toLowerCase());
+                if (recipient == null) {
+                    Log.d(K9.LOG_TAG, "Received a crypto status for unknown address " + emailAddress);
+                    continue;
+                }
+                switch (status) {
+                    case CRYPTO_PROVIDER_STATUS_UNTRUSTED: {
+                        if (recipient.getCryptoStatus() == RecipientCryptoStatus.UNAVAILABLE) {
+                            recipient.setCryptoStatus(RecipientCryptoStatus.AVAILABLE_UNTRUSTED);
                         }
-                        case CRYPTO_PROVIDER_STATUS_TRUSTED: {
-                            if (recipient.getCryptoStatus() != RecipientCryptoStatus.AVAILABLE_TRUSTED) {
-                                recipient.setCryptoStatus(RecipientCryptoStatus.AVAILABLE_TRUSTED);
-                            }
-                            break;
+                        break;
+                    }
+                    case CRYPTO_PROVIDER_STATUS_TRUSTED: {
+                        if (recipient.getCryptoStatus() != RecipientCryptoStatus.AVAILABLE_TRUSTED) {
+                            recipient.setCryptoStatus(RecipientCryptoStatus.AVAILABLE_TRUSTED);
                         }
+                        break;
                     }
                 }
             }
