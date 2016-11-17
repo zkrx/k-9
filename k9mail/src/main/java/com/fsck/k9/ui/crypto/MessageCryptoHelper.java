@@ -249,6 +249,7 @@ public class MessageCryptoHelper {
         Address[] from = currentMessage.getFrom();
         if (from.length > 0) {
             decryptIntent.putExtra(OpenPgpApi.EXTRA_SENDER_ADDRESS, from[0].getAddress());
+            decryptIntent.putExtra(OpenPgpApi.EXTRA_TRUST_IDENTITY, from[0].getAddress());
         }
 
         decryptIntent.putExtra(OpenPgpApi.EXTRA_DECRYPTION_RESULT, cachedDecryptionResult);
