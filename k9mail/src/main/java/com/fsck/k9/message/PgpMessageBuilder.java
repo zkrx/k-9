@@ -1,6 +1,7 @@
 package com.fsck.k9.message;
 
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -31,6 +32,7 @@ import com.fsck.k9.mail.internet.MimeMultipart;
 import com.fsck.k9.mail.internet.MimeUtility;
 import com.fsck.k9.mail.internet.TextBody;
 import com.fsck.k9.mailstore.BinaryMemoryBody;
+import okio.ByteString;
 import org.apache.commons.io.IOUtils;
 import org.apache.james.mime4j.util.MimeUtil;
 import org.openintents.openpgp.OpenPgpError;
@@ -214,17 +216,49 @@ public class PgpMessageBuilder extends MessageBuilder {
                 }
                 boolean isOpportunisticError = error.getErrorId() == OpenPgpError.OPPORTUNISTIC_MISSING_KEYS;
                 if (isOpportunisticError) {
-                    if (!cryptoStatus.isEncryptionOpportunistic()) {
-                        throw new IllegalStateException(
-                                "Got opportunistic error, but encryption wasn't supposed to be opportunistic!");
-                    }
-                    Timber.d("Skipping encryption due to opportunistic mode");
+                    skipEncryptionInOpportunisticMode();
                     return null;
                 }
                 throw new MessagingException(error.getMessage());
         }
 
         throw new IllegalStateException("unreachable code segment reached");
+    }
+
+    private void skipEncryptionInOpportunisticMode() {
+        if (!cryptoStatus.isEncryptionOpportunistic()) {
+            throw new IllegalStateException(
+                    "Got opportunistic error, but encryption wasn't supposed to be opportunistic!");
+        }
+        Timber.d("Skipping encryption due to opportunistic mode");
+
+        attachKeyInOpenPgpHeader();
+
+    }
+
+    private void attachKeyInOpenPgpHeader() {
+        Intent gimmeKeyIntent = new Intent(OpenPgpApi.ACTION_GET_KEY);
+        gimmeKeyIntent.putExtra(OpenPgpApi.EXTRA_KEY_ID, cryptoStatus.getSigningKeyId());
+        gimmeKeyIntent.putExtra(OpenPgpApi.EXTRA_MINIMIZE, true);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        Intent result = openPgpApi.executeApi(gimmeKeyIntent, (InputStream) null, baos);
+
+        if (result.getIntExtra(OpenPgpApi.RESULT_CODE, OpenPgpApi.RESULT_CODE_ERROR) == OpenPgpApi.RESULT_CODE_SUCCESS) {
+            byte[] keyMaterial = baos.toByteArray();
+            String base64KeyMaterial = "OpenPGP: " + ByteString.of(keyMaterial).base64();
+            StringBuilder headerLines = new StringBuilder();
+            for (int i = 0, j = base64KeyMaterial.length(); i < j; i += 76) {
+                if (i +76 > j) {
+                    headerLines.append(base64KeyMaterial.substring(i)).append("\n ");
+                } else {
+                    headerLines.append(base64KeyMaterial.substring(i, i+76)).append("\n ");
+                }
+            }
+
+            String rawHeader = headerLines.toString();
+            Timber.d(rawHeader);
+            currentProcessedMimeMessage.addRawHeader("OpenPGP", rawHeader);
+        }
     }
 
     @NonNull
@@ -298,6 +332,8 @@ public class PgpMessageBuilder extends MessageBuilder {
             Timber.e("missing micalg parameter for pgp multipart/signed!");
         }
         currentProcessedMimeMessage.setHeader(MimeHeader.HEADER_CONTENT_TYPE, contentType);
+
+        attachKeyInOpenPgpHeader();
     }
 
     private void mimeBuildEncryptedMessage(@NonNull Body encryptedBodyPart) throws MessagingException {
