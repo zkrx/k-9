@@ -211,6 +211,9 @@ public class OpenPgpApi {
      */
     public static final String ACTION_GET_KEY = "org.openintents.openpgp.action.GET_KEY";
 
+
+    public static final String ACTION_UPDATE_TRUST_ID = "org.openintents.openpgp.action.UPDATE_TRUST_ID";
+
     /* Intent extras */
     public static final String EXTRA_API_VERSION = "api_version";
 
@@ -266,6 +269,7 @@ public class OpenPgpApi {
     public static final String EXTRA_DATA_LENGTH = "data_length";
     public static final String EXTRA_SENDER_ADDRESS = "sender_address";
     public static final String EXTRA_TRUST_IDENTITY = "trust_identity";
+    public static final String EXTRA_INLINE_KEY_DATA = "inline_key_data";
     public static final String RESULT_SIGNATURE = "signature";
     public static final String RESULT_DECRYPTION = "decryption";
     public static final String RESULT_METADATA = "metadata";

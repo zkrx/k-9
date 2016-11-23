@@ -15,7 +15,6 @@ import android.support.annotation.VisibleForTesting;
 import timber.log.Timber;
 
 import com.fsck.k9.Globals;
-import com.fsck.k9.K9;
 import com.fsck.k9.activity.compose.ComposeCryptoStatus;
 import com.fsck.k9.mail.Body;
 import com.fsck.k9.mail.BodyPart;
@@ -32,6 +31,7 @@ import com.fsck.k9.mail.internet.MimeMultipart;
 import com.fsck.k9.mail.internet.MimeUtility;
 import com.fsck.k9.mail.internet.TextBody;
 import com.fsck.k9.mailstore.BinaryMemoryBody;
+import com.fsck.k9.ui.crypto.AutocryptIncomingOperations;
 import okio.ByteString;
 import org.apache.commons.io.IOUtils;
 import org.apache.james.mime4j.util.MimeUtil;
@@ -237,27 +237,32 @@ public class PgpMessageBuilder extends MessageBuilder {
     }
 
     private void attachKeyInOpenPgpHeader() {
+        String autocryptAddress = currentProcessedMimeMessage.getFrom()[0].getAddress();
+
         Intent gimmeKeyIntent = new Intent(OpenPgpApi.ACTION_GET_KEY);
         gimmeKeyIntent.putExtra(OpenPgpApi.EXTRA_KEY_ID, cryptoStatus.getSigningKeyId());
         gimmeKeyIntent.putExtra(OpenPgpApi.EXTRA_MINIMIZE, true);
+        gimmeKeyIntent.putExtra(OpenPgpApi.EXTRA_MINIMIZE_USER_ID, autocryptAddress);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         Intent result = openPgpApi.executeApi(gimmeKeyIntent, (InputStream) null, baos);
 
         if (result.getIntExtra(OpenPgpApi.RESULT_CODE, OpenPgpApi.RESULT_CODE_ERROR) == OpenPgpApi.RESULT_CODE_SUCCESS) {
             byte[] keyMaterial = baos.toByteArray();
-            String base64KeyMaterial = "OpenPGP: " + ByteString.of(keyMaterial).base64();
+            String autocryptHeader = AutocryptIncomingOperations.AUTOCRYPT_HEADER + ": ";
+            autocryptHeader += AutocryptIncomingOperations.AUTOCRYPT_PARAM_TO + "=" + autocryptAddress + ";";
+            autocryptHeader += AutocryptIncomingOperations.AUTOCRYPT_PARAM_KEY_DATA + "=" + ByteString.of(keyMaterial).base64();
             StringBuilder headerLines = new StringBuilder();
-            for (int i = 0, j = base64KeyMaterial.length(); i < j; i += 76) {
+            for (int i = 0, j = autocryptHeader.length(); i < j; i += 76) {
                 if (i +76 > j) {
-                    headerLines.append(base64KeyMaterial.substring(i)).append("\n ");
+                    headerLines.append(autocryptHeader.substring(i)).append("\n ");
                 } else {
-                    headerLines.append(base64KeyMaterial.substring(i, i+76)).append("\n ");
+                    headerLines.append(autocryptHeader.substring(i, i+76)).append("\n ");
                 }
             }
 
             String rawHeader = headerLines.toString();
             Timber.d(rawHeader);
-            currentProcessedMimeMessage.addRawHeader("OpenPGP", rawHeader);
+            currentProcessedMimeMessage.addRawHeader("Autocrypt", rawHeader);
         }
     }
 

@@ -5,7 +5,9 @@ package com.fsck.k9.mail.internet;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 import android.support.annotation.NonNull;
@@ -958,6 +960,32 @@ public class MimeUtility {
         }
         return null;
     }
+
+    /**
+     * Returns the named parameter of a header field. If name is null the first
+     * parameter is returned, or if there are no additional parameters in the
+     * field the entire field is returned. Otherwise the named parameter is
+     * searched for in a case insensitive fashion and returned.
+     *
+     * @param headerValue the header value
+     * @return the value. if the parameter cannot be found the method returns null.
+     */
+    public static Map<String,String> getAllHeaderParameters(String headerValue) {
+        Map<String,String> result = new HashMap<>();
+
+        headerValue = headerValue.replaceAll("\r|\n", "");
+        String[] parts = headerValue.split(";");
+        for (String part : parts) {
+            String[] partParts = part.split("=", 2);
+            if (partParts.length == 2) {
+                String parameterName = partParts[0].trim().toLowerCase(Locale.US);
+                String parameterValue = partParts[1].trim();
+                result.put(parameterName, parameterValue);
+            }
+        }
+        return result;
+    }
+
 
     public static Part findFirstPartByMimeType(Part part, String mimeType) {
         if (part.getBody() instanceof Multipart) {
