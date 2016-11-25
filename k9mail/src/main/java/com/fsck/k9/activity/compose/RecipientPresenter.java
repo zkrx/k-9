@@ -160,6 +160,10 @@ public class RecipientPresenter implements PermissionPingCallback {
         }
     }
 
+    public void initFromTrustIdAction(String trustId) {
+        addToAddresses(Address.parse(trustId));
+    }
+
     public void initFromMailto(MailTo mailTo) {
         addToAddresses(mailTo.getTo());
         addCcAddresses(mailTo.getCc());
