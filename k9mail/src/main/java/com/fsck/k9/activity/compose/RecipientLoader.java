@@ -178,11 +178,11 @@ public class RecipientLoader extends AsyncTaskLoader<List<Recipient>> {
 
         ContentResolver contentResolver = getContext().getContentResolver();
 
-        query = "%" + query + "%";
+        String selectionQuery = "%" + query + "%";
         Uri queryUri = ContactsContract.CommonDataKinds.Email.CONTENT_URI;
         String selection = Contacts.DISPLAY_NAME_PRIMARY + " LIKE ? " +
                 " OR (" + Email.ADDRESS + " LIKE ? AND " + Data.MIMETYPE + " = '" + Email.CONTENT_ITEM_TYPE + "')";
-        String[] selectionArgs = { query, query };
+        String[] selectionArgs = { selectionQuery, selectionQuery };
         Cursor cursor = contentResolver.query(queryUri, PROJECTION, selection, selectionArgs, SORT_ORDER);
 
         if (cursor == null) {
@@ -190,6 +190,11 @@ public class RecipientLoader extends AsyncTaskLoader<List<Recipient>> {
         }
 
         fillContactDataFromCursor(cursor, recipients, recipientMap);
+        if (recipients.isEmpty()) {
+            Recipient recipient = new Recipient("Unknown Address", query, "Unknown", null, null);
+            recipients.add(recipient);
+            recipientMap.put(query, recipient);
+        }
 
         if (observerContact != null) {
             observerContact = new ForceLoadContentObserver();
@@ -272,26 +277,23 @@ public class RecipientLoader extends AsyncTaskLoader<List<Recipient>> {
         }
 
         while (cursor.moveToNext()) {
-            String email = cursor.getString(INDEX_EMAIL_ADDRESS);
+            String queriedAddress = cursor.getString(INDEX_EMAIL_ADDRESS);
             int status = cursor.getInt(INDEX_EMAIL_STATUS);
 
-            for (Address address : Address.parseUnencoded(email)) {
-                String emailAddress = address.getAddress();
-                if (recipientMap.containsKey(emailAddress)) {
-                    Recipient recipient = recipientMap.get(emailAddress);
-                    switch (status) {
-                        case CRYPTO_PROVIDER_STATUS_UNTRUSTED: {
-                            if (recipient.getCryptoStatus() == RecipientCryptoStatus.UNAVAILABLE) {
-                                recipient.setCryptoStatus(RecipientCryptoStatus.AVAILABLE_UNTRUSTED);
-                            }
-                            break;
+            if (recipientMap.containsKey(queriedAddress)) {
+                Recipient recipient = recipientMap.get(queriedAddress);
+                switch (status) {
+                    case CRYPTO_PROVIDER_STATUS_UNTRUSTED: {
+                        if (recipient.getCryptoStatus() == RecipientCryptoStatus.UNAVAILABLE) {
+                            recipient.setCryptoStatus(RecipientCryptoStatus.AVAILABLE_UNTRUSTED);
                         }
-                        case CRYPTO_PROVIDER_STATUS_TRUSTED: {
-                            if (recipient.getCryptoStatus() != RecipientCryptoStatus.AVAILABLE_TRUSTED) {
-                                recipient.setCryptoStatus(RecipientCryptoStatus.AVAILABLE_TRUSTED);
-                            }
-                            break;
+                        break;
+                    }
+                    case CRYPTO_PROVIDER_STATUS_TRUSTED: {
+                        if (recipient.getCryptoStatus() != RecipientCryptoStatus.AVAILABLE_TRUSTED) {
+                            recipient.setCryptoStatus(RecipientCryptoStatus.AVAILABLE_TRUSTED);
                         }
+                        break;
                     }
                 }
             }
