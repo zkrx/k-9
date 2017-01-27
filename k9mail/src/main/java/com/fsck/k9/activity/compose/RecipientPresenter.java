@@ -559,7 +559,7 @@ public class RecipientPresenter implements PermissionPingCallback {
                 if (cachedCryptoStatus.isSignOnly()) {
                     recipientMvpView.showErrorIsSignOnly();
                 } else {
-                    recipientMvpView.showCryptoDialog(currentCryptoMode, currentIdentity);
+                    recipientMvpView.showCryptoDialog(currentCryptoMode);
                 }
                 return;
 

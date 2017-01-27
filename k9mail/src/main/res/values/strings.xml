@@ -1225,6 +1225,7 @@ Please submit bug reports, contribute new features and ask questions at
     <string name="crypto_no_provider_button">Choose OpenPGP App</string>
     <string name="crypto_key_ok">Your key: %s</string>
     <string name="crypto_key_ok_unknown">Your key: &lt;unknown name&gt;</string>
+    <string name="crypto_key_name_caption">Your key:</string>
 
     <string name="mail_list_widget_text">K-9 Message List</string>
     <string name="mail_list_widget_loading">Loading messages…</string>

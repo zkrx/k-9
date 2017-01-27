@@ -8,7 +8,6 @@ import android.app.Dialog;
 import android.app.DialogFragment;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.DialogInterface.OnClickListener;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.view.LayoutInflater;
@@ -27,8 +26,7 @@ import com.fsck.k9.view.OpenPgpKeyStatusPresenter.OpenPgpKeySelectMvpView;
 import com.fsck.k9.view.ToolableViewAnimator;
 
 
-public class CryptoSettingsDialog extends DialogFragment implements CryptoStatusSelectedListener,
-        OpenPgpKeySelectMvpView {
+public class CryptoSettingsDialog extends DialogFragment implements CryptoStatusSelectedListener{
     private static final String ARG_CURRENT_MODE = "current_mode";
 
 
@@ -64,19 +62,19 @@ public class CryptoSettingsDialog extends DialogFragment implements CryptoStatus
         openPgpSelectKeyName = (TextView) view.findViewById(R.id.crypto_key_name);
 
         cryptoModeSelector.setCryptoStatusListener(this);
-        openPgpKeyStatusPresenter.setView(this);
+        openPgpKeyStatusPresenter.setView(openPgpKeySelectMvpView);
 
         updateView(false);
 
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setView(view);
-        builder.setNegativeButton(R.string.crypto_settings_cancel, new OnClickListener() {
+        builder.setNegativeButton(R.string.crypto_settings_cancel, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int i) {
                 dialog.dismiss();
             }
         });
-        builder.setPositiveButton(R.string.crypto_settings_ok, new OnClickListener() {
+        builder.setPositiveButton(R.string.crypto_settings_ok, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 changeCryptoSettings();
@@ -171,20 +169,32 @@ public class CryptoSettingsDialog extends DialogFragment implements CryptoStatus
         updateView(true);
     }
 
-    @Override
-    public void setOpenPgpSelectViewStatus(int displayedChild, String displayUserId) {
-        if (displayUserId != null) {
-            openPgpSelectKeyName.setText(getString(R.string.crypto_key_ok, displayUserId));
-        } else {
-            openPgpSelectKeyName.setText(R.string.crypto_key_ok_unknown);
-        }
-        openPgpSelectView.setDisplayedChild(displayedChild);
-    }
+    private OpenPgpKeySelectMvpView openPgpKeySelectMvpView = new OpenPgpKeySelectMvpView() {
 
-    @Override
-    public void setOnClickListener(View.OnClickListener onClickListener) {
-        openPgpSelectView.setOnClickListener(onClickListener);
-    }
+        @Override
+        public void setOpenPgpSelectViewStatus(int displayedChild, String displayUserId) {
+            if (displayUserId != null) {
+                openPgpSelectKeyName.setText(displayUserId);
+            } else {
+                openPgpSelectKeyName.setText(R.string.crypto_key_ok_unknown);
+            }
+            openPgpSelectView.setDisplayedChild(displayedChild);
+        }
+
+        @Override
+        public void setOnClickListener(View.OnClickListener onClickListener) {
+            for (int i = 0, j = openPgpSelectView.getChildCount(); i < j; i++) {
+                View childView = openPgpSelectView.getChildAt(i);
+                View clickableView = childView.findViewById(R.id.crypto_key_change);
+                if (clickableView != null) {
+                    clickableView.setOnClickListener(onClickListener);
+                } else {
+                    childView.setOnClickListener(onClickListener);
+                }
+            }
+        }
+
+    };
 
     public interface CryptoSettingsDialogListener {
         void onCryptoModeChanged(CryptoMode cryptoMode);

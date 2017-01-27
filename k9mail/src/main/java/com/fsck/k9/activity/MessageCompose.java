@@ -1334,7 +1334,6 @@ public class MessageCompose extends K9Activity implements OnClickListener, Cance
 
     public OpenPgpKeyStatusPresenter createOpenPgpKeyStatusPresenterForView() {
         openPgpKeyStatusPresenter = new OpenPgpKeyStatusPresenter(getBaseContext(), this, identity);
-        openPgpKeyStatusPresenter.setDefaultUserId(OpenPgpApiHelper.buildUserId(identity));
         return openPgpKeyStatusPresenter;
     }
 

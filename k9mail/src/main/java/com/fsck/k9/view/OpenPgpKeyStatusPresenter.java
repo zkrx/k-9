@@ -17,7 +17,6 @@
 package com.fsck.k9.view;
 
 
-import android.app.Activity;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
@@ -47,8 +46,6 @@ public class OpenPgpKeyStatusPresenter implements OnClickListener {
 
 
     private OpenPgpKeySelectMvpView view;
-
-    private String mDefaultUserId;
 
     private State currentState;
     private String cryptoProvider;
@@ -98,7 +95,7 @@ public class OpenPgpKeyStatusPresenter implements OnClickListener {
     }
 
     private void setupCryptoProvider() {
-        String cryptoProvider = K9.getCryptoProvider();
+        String cryptoProvider = K9.getOpenPgpProvider();
 
         boolean providerIsBound = openPgpServiceConnection != null && openPgpServiceConnection.isBound();
         boolean isSameProvider = cryptoProvider != null && cryptoProvider.equals(this.cryptoProvider);
@@ -180,49 +177,38 @@ public class OpenPgpKeyStatusPresenter implements OnClickListener {
             default:
                 pendingUserInteractionIntent = result.getParcelableExtra(OpenPgpApi.RESULT_INTENT);
                 OpenPgpError error = result.getParcelableExtra(OpenPgpApi.RESULT_ERROR);
-                switch (error.getErrorId()) {
-                    case OpenPgpError.KEY_ERROR:
-                        updateViewState(State.KEY_ERROR);
-                        break;
-                    case OpenPgpError.IDENTITY_KEY_NOT_CONFIGURED:
-                        updateViewState(State.KEY_UNCONFIGURED);
-                        break;
-                    case OpenPgpError.IDENTITY_DISABLED:
-                        updateViewState(State.KEY_DISABLED);
-                        break;
-                    default:
-                        updateViewState(State.PROVIDER_ERROR);
-                        break;
-                }
+                setStatusFromError(error);
                 break;
         }
     }
 
-    public void setDefaultUserId(String userId) {
-        mDefaultUserId = userId;
+    private void setStatusFromError(OpenPgpError error) {
+        if (error == null) {
+            updateViewState(State.PROVIDER_ERROR);
+            return;
+        }
+        switch (error.getErrorId()) {
+            case OpenPgpError.KEY_ERROR:
+                updateViewState(State.KEY_ERROR);
+                break;
+            case OpenPgpError.IDENTITY_KEY_NOT_CONFIGURED:
+                updateViewState(State.KEY_UNCONFIGURED);
+                break;
+            case OpenPgpError.IDENTITY_DISABLED:
+                updateViewState(State.KEY_DISABLED);
+                break;
+            default:
+                updateViewState(State.PROVIDER_ERROR);
+                break;
+        }
     }
 
     @Override
     public void onClick(View view) {
         if (pendingUserInteractionIntent != null) {
             launchUserInteractionPendingIntent();
-            return;
-        }
-
-        switch (currentState) {
-            case PROVIDER_UNCONFIGURED:
-                // TODO
-                break;
-
-            case PROVIDER_ERROR:
-                setupCryptoProvider();
-                break;
-
-            case KEY_OK:
-            case KEY_UNCONFIGURED:
-            case KEY_ERROR:
-                // nothing to do here?
-                break;
+        } else {
+            setupCryptoProvider();
         }
     }
 

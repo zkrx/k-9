@@ -1,62 +1,329 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<com.fsck.k9.view.ToolableViewAnimator xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:custom="http://schemas.android.com/apk/res-auto"
-    android:orientation="vertical"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:gravity="center_horizontal"
-    android:padding="15dp">
+    android:layout_height="wrap_content"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:inAnimation="@anim/fade_in"
+    android:outAnimation="@anim/fade_out"
+    android:padding="24dp"
+    android:id="@+id/crypto_select_view"
+    custom:previewInitialChild="6">
 
-    <com.fsck.k9.view.LinearViewAnimator
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/crypto_status_text"
-        custom:upInAnimation="@anim/fade_in_right"
-        custom:upOutAnimation="@anim/fade_out_right"
-        custom:downInAnimation="@anim/fade_in_left"
-        custom:downOutAnimation="@anim/fade_out_left">
+        android:layout_gravity="center"
+        android:minHeight="?android:listPreferredItemHeightSmall"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:background="@drawable/selectable_item_background">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:textAppearance="?android:textAppearanceMedium"
-            android:text="@string/crypto_mode_disabled"
+        <ProgressBar
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_margin="8dp"
+            android:indeterminate="true"
             />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
             android:textAppearance="?android:textAppearanceMedium"
-            android:text="@string/crypto_mode_opportunistic"
+            android:text="Searching OpenPGP-App…"
             />
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:textAppearance="?android:textAppearanceMedium"
-            android:text="@string/crypto_mode_private"
-            />
+    </LinearLayout>
 
-    </com.fsck.k9.view.LinearViewAnimator>
-
-    <com.fsck.k9.view.CryptoModeWithoutSignOnlySelector
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/crypto_status_selector"
-        />
+        android:layout_gravity="center"
+        android:minHeight="?android:listPreferredItemHeightSmall"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:background="@drawable/selectable_item_background">
 
-    <FrameLayout
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_margin="4dp"
+            android:src="@drawable/status_lock_error"
+            android:tint="?openpgp_grey"
+            />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="8dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:textAppearanceMedium"
+                android:text="No OpenPGP-App"
+                />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:textAppearanceSmall"
+                android:text="Click here to configure OpenPGP-App"
+                />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <LinearLayout
         android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:minHeight="?android:listPreferredItemHeightSmall"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:background="@drawable/selectable_item_background">
+
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_margin="4dp"
+            android:src="@drawable/status_lock_error"
+            android:tint="?openpgp_red"
+            />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="8dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:textAppearanceMedium"
+                android:text="OpenPGP-App Error"
+                />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:textAppearanceSmall"
+                android:text="Connection failed! Click here to retry."
+                />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:minHeight="?android:listPreferredItemHeightSmall"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:background="@drawable/selectable_item_background">
+
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_margin="4dp"
+            android:src="@drawable/status_signature_unverified_cutout"
+            android:tint="?openpgp_orange"
+            />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="8dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:textAppearanceMedium"
+                android:text="No key selected"
+                />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:textAppearanceSmall"
+                android:text="Click here to select an OpenPGP key"
+                />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:minHeight="?android:listPreferredItemHeightSmall"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:background="@drawable/selectable_item_background">
+
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_margin="4dp"
+            android:src="@drawable/status_lock_disabled"
+            android:tint="?openpgp_grey"
+            />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="8dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:textAppearanceMedium"
+                android:text="Crypto disabled for this identity"
+                />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:textAppearanceSmall"
+                android:text="Click here to enable"
+                />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:minHeight="?android:listPreferredItemHeightSmall"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:background="@drawable/selectable_item_background">
+
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_margin="4dp"
+            android:src="@drawable/status_signature_unverified_cutout"
+            android:tint="?openpgp_red"
+            />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="8dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:textAppearanceMedium"
+                android:text="OpenPGP Key Error!"
+                />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:textAppearanceSmall"
+                android:text="Click here to solve the problem"
+                />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-        <include
-            android:layout_width="match_parent"
+        <com.fsck.k9.view.LinearViewAnimator
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            layout="@layout/crypto_select_key_view" />
+            android:layout_centerHorizontal="true"
+            android:id="@+id/crypto_status_text"
+            custom:upInAnimation="@anim/fade_in_right"
+            custom:upOutAnimation="@anim/fade_out_right"
+            custom:downInAnimation="@anim/fade_in_left"
+            custom:downOutAnimation="@anim/fade_out_left">
 
-    </FrameLayout>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:textAppearance="?android:textAppearanceMedium"
+                android:text="@string/crypto_mode_disabled"
+                />
 
-</LinearLayout>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:textAppearance="?android:textAppearanceMedium"
+                android:text="@string/crypto_mode_opportunistic"
+                />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:textAppearance="?android:textAppearanceMedium"
+                android:text="@string/crypto_mode_private"
+                />
+
+        </com.fsck.k9.view.LinearViewAnimator>
+
+        <com.fsck.k9.view.CryptoModeWithoutSignOnlySelector
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_below="@id/crypto_status_text"
+            android:id="@+id/crypto_status_selector"
+            />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/crypto_status_selector"
+            android:layout_gravity="center_vertical"
+            android:layout_alignParentLeft="true"
+            android:id="@+id/crypto_key_name_caption"
+            android:ellipsize="end"
+            android:text="@string/crypto_key_name_caption"
+            />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/crypto_key_name_caption"
+            android:layout_gravity="center_vertical"
+            android:layout_alignParentLeft="true"
+            android:layout_toLeftOf="@+id/crypto_key_change"
+            android:textAppearance="?android:textAppearanceMedium"
+            android:id="@+id/crypto_key_name"
+            android:ellipsize="end"
+            android:maxLines="1"
+            tools:text="look@my.amazin.horse"
+            />
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/crypto_status_selector"
+            android:layout_alignParentRight="true"
+            android:id="@+id/crypto_key_change"
+            android:src="?iconActionSettings"
+            android:background="@drawable/selectable_item_background"
+            android:padding="6dp"
+            />
+
+    </RelativeLayout>
+
+</com.fsck.k9.view.ToolableViewAnimator>

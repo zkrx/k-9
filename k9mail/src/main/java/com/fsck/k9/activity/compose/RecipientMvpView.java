@@ -4,7 +4,6 @@ package com.fsck.k9.activity.compose;
 import java.util.Arrays;
 import java.util.List;
 
-import android.app.Activity;
 import android.app.LoaderManager;
 import android.app.PendingIntent;
 import android.content.Context;
@@ -17,7 +16,6 @@ import android.widget.Toast;
 import android.widget.ViewAnimator;
 
 import com.fsck.k9.FontSizes;
-import com.fsck.k9.Identity;
 import com.fsck.k9.R;
 import com.fsck.k9.activity.MessageCompose;
 import com.fsck.k9.activity.compose.RecipientPresenter.CryptoMode;
@@ -395,10 +393,10 @@ public class RecipientMvpView implements OnFocusChangeListener, OnClickListener 
         }
     }
 
-    public void showCryptoDialog(CryptoMode currentCryptoMode, Identity identity) {
+    public void showCryptoDialog(CryptoMode currentCryptoMode) {
         hideKeyboard();
 
-        CryptoSettingsDialog dialog = CryptoSettingsDialog.newInstance(currentCryptoMode, identity);
+        CryptoSettingsDialog dialog = CryptoSettingsDialog.newInstance(currentCryptoMode);
         dialog.show(activity.getFragmentManager(), "crypto_settings");
     }
 
