@@ -9,7 +9,7 @@ import java.io.InputStream;
 import com.fsck.k9.mail.MessagingException;
 import com.fsck.k9.mail.internet.BinaryTempFileBody;
 import com.fsck.k9.mail.internet.MimeMessage;
-import com.fsck.k9.ui.crypto.AutocryptIncomingOperations.AutocryptHeader;
+import com.fsck.k9.ui.crypto.AutocryptOperations.AutocryptHeader;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -24,8 +24,8 @@ import static org.junit.Assert.assertNull;
 
 @RunWith(RobolectricTestRunner.class)
 @Config(manifest = Config.NONE, sdk = 21)
-public class AutocryptIncomingOperationsTest {
-    AutocryptIncomingOperations autocryptOperations = new AutocryptIncomingOperations();
+public class AutocryptOperationsTest {
+    AutocryptOperations autocryptOperations = new AutocryptOperations();
 
     @Before
     public void setUp() throws Exception {

@@ -1,34 +1,36 @@
 package com.fsck.k9.ui.crypto;
 
 
+import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 
 import android.content.Intent;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
-import android.util.Log;
 
-import com.fsck.k9.K9;
 import com.fsck.k9.mail.internet.MimeMessage;
 import com.fsck.k9.mail.internet.MimeUtility;
 import okio.ByteString;
 import org.openintents.openpgp.OpenPgpInlineKeyUpdate;
 import org.openintents.openpgp.util.OpenPgpApi;
+import timber.log.Timber;
 
 
-public class AutocryptIncomingOperations {
-
-    public static final String AUTOCRYPT_PARAM_KEY_DATA = "key";
-    public static final String AUTOCRYPT_PARAM_TO = "to";
-    public static final String AUTOCRYPT_HEADER = "Autocrypt";
+public class AutocryptOperations {
+    private static final String AUTOCRYPT_PARAM_KEY_DATA = "key";
+    private static final String AUTOCRYPT_PARAM_TO = "to";
+    private static final String AUTOCRYPT_HEADER = "Autocrypt";
     private static final String AUTOCRYPT_PARAM_TYPE = "type";
 
-    AutocryptIncomingOperations() {
+
+    public AutocryptOperations() {
     }
+
 
     private boolean addKeyFromAutocryptHeaderToIntentIfPresent(MimeMessage currentMessage, Intent decryptIntent) {
         AutocryptHeader autocryptHeader = getValidAutocryptHeader(currentMessage);
@@ -88,25 +90,25 @@ public class AutocryptIncomingOperations {
 
         String type = parameters.remove(AUTOCRYPT_PARAM_TYPE);
         if (type != null && !type.equals("p")) {
-            Log.e(K9.LOG_TAG, "autocrypt: unsupported type parameter " + type);
+            Timber.e("autocrypt: unsupported type parameter %s", type);
             return null;
         }
 
         String base64KeyData = parameters.remove(AUTOCRYPT_PARAM_KEY_DATA);
         if (base64KeyData == null) {
-            Log.e(K9.LOG_TAG, "autocrypt: missing key parameter");
+            Timber.e("autocrypt: missing key parameter");
             return null;
         }
 
         ByteString byteString = ByteString.decodeBase64(base64KeyData);
         if (byteString == null) {
-            Log.e(K9.LOG_TAG, "autocrypt: error parsing base64 data");
+            Timber.e("autocrypt: error parsing base64 data");
             return null;
         }
 
         String to = parameters.remove(AUTOCRYPT_PARAM_TO);
         if (to == null) {
-            Log.e(K9.LOG_TAG, "autocrypt: no to header!");
+            Timber.e("autocrypt: no to header!");
             return null;
         }
 
@@ -129,6 +131,51 @@ public class AutocryptIncomingOperations {
 
     boolean hasAutocryptHeader(MimeMessage currentMessage) {
         return currentMessage.getHeader(AUTOCRYPT_HEADER).length > 0;
+    }
+
+    public void attachKeyInOpenPgpHeader(OpenPgpApi openPgpApi, MimeMessage message, String autocryptAddress, long keyId) {
+        HashMap<String,String> parameters = new HashMap<>();
+        parameters.put(AUTOCRYPT_PARAM_TO, autocryptAddress);
+
+        byte[] keyData = getKeyMaterialFromApi(openPgpApi, keyId, autocryptAddress);
+
+        AutocryptHeader autocryptHeader = new AutocryptHeader(parameters, autocryptAddress, keyData);
+        String rawAutocryptHeader = autocryptHeaderToString(autocryptHeader);
+
+        message.addRawHeader(AUTOCRYPT_HEADER, rawAutocryptHeader);
+    }
+
+    private byte[] getKeyMaterialFromApi(OpenPgpApi openPgpApi, long keyId, String autocryptAddress) {
+        Intent gimmeKeyIntent = new Intent(OpenPgpApi.ACTION_GET_KEY);
+        gimmeKeyIntent.putExtra(OpenPgpApi.EXTRA_KEY_ID, keyId);
+        gimmeKeyIntent.putExtra(OpenPgpApi.EXTRA_MINIMIZE, true);
+        gimmeKeyIntent.putExtra(OpenPgpApi.EXTRA_MINIMIZE_USER_ID, autocryptAddress);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        Intent result = openPgpApi.executeApi(gimmeKeyIntent, (InputStream) null, baos);
+
+        if (result.getIntExtra(OpenPgpApi.RESULT_CODE, OpenPgpApi.RESULT_CODE_ERROR) ==
+                OpenPgpApi.RESULT_CODE_SUCCESS) {
+            return baos.toByteArray();
+        } else{
+            return null;
+        }
+    }
+
+    private String autocryptHeaderToString(AutocryptHeader autocryptHeader) {
+        String autocryptHeaderString = AutocryptOperations.AUTOCRYPT_HEADER + ": ";
+        autocryptHeaderString += AutocryptOperations.AUTOCRYPT_PARAM_TO + "=" + autocryptHeader.to + ";";
+        autocryptHeaderString += AutocryptOperations.AUTOCRYPT_PARAM_KEY_DATA + "=" +
+                ByteString.of(autocryptHeader.keyData).base64();
+        StringBuilder headerLines = new StringBuilder();
+        for (int i = 0, j = autocryptHeaderString.length(); i < j; i += 76) {
+            if (i +76 > j) {
+                headerLines.append(autocryptHeaderString.substring(i)).append("\n ");
+            } else {
+                headerLines.append(autocryptHeaderString.substring(i, i+76)).append("\n ");
+            }
+        }
+
+        return headerLines.toString();
     }
 
     @VisibleForTesting

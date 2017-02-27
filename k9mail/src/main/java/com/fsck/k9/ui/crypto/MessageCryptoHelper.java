@@ -63,7 +63,7 @@ public class MessageCryptoHelper {
 
     private final Context context;
     private final String openPgpProviderPackage;
-    private final AutocryptIncomingOperations autocryptOperations;
+    private final AutocryptOperations autocryptOperations;
     private final Object callbackLock = new Object();
     private final Deque<CryptoPart> partsToDecryptOrVerify = new ArrayDeque<>();
 
@@ -91,7 +91,7 @@ public class MessageCryptoHelper {
 
     public MessageCryptoHelper(Context context) {
         this.context = context.getApplicationContext();
-        this.autocryptOperations = new AutocryptIncomingOperations();
+        this.autocryptOperations = new AutocryptOperations();
 
         if (!K9.isOpenPgpProviderConfigured()) {
             throw new IllegalStateException("MessageCryptoHelper must only be called with a openpgp provider!");

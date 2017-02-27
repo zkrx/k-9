@@ -1,7 +1,6 @@
 package com.fsck.k9.message;
 
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -31,8 +30,7 @@ import com.fsck.k9.mail.internet.MimeMultipart;
 import com.fsck.k9.mail.internet.MimeUtility;
 import com.fsck.k9.mail.internet.TextBody;
 import com.fsck.k9.mailstore.BinaryMemoryBody;
-import com.fsck.k9.ui.crypto.AutocryptIncomingOperations;
-import okio.ByteString;
+import com.fsck.k9.ui.crypto.AutocryptOperations;
 import org.apache.commons.io.IOUtils;
 import org.apache.james.mime4j.util.MimeUtil;
 import org.openintents.openpgp.OpenPgpError;
@@ -237,33 +235,13 @@ public class PgpMessageBuilder extends MessageBuilder {
     }
 
     private void attachKeyInOpenPgpHeader() {
+        AutocryptOperations autocryptOperations = new AutocryptOperations();
+
+        long autocryptId = cryptoStatus.getSigningKeyId();
         String autocryptAddress = currentProcessedMimeMessage.getFrom()[0].getAddress();
 
-        Intent gimmeKeyIntent = new Intent(OpenPgpApi.ACTION_GET_KEY);
-        gimmeKeyIntent.putExtra(OpenPgpApi.EXTRA_KEY_ID, cryptoStatus.getSigningKeyId());
-        gimmeKeyIntent.putExtra(OpenPgpApi.EXTRA_MINIMIZE, true);
-        gimmeKeyIntent.putExtra(OpenPgpApi.EXTRA_MINIMIZE_USER_ID, autocryptAddress);
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        Intent result = openPgpApi.executeApi(gimmeKeyIntent, (InputStream) null, baos);
-
-        if (result.getIntExtra(OpenPgpApi.RESULT_CODE, OpenPgpApi.RESULT_CODE_ERROR) == OpenPgpApi.RESULT_CODE_SUCCESS) {
-            byte[] keyMaterial = baos.toByteArray();
-            String autocryptHeader = AutocryptIncomingOperations.AUTOCRYPT_HEADER + ": ";
-            autocryptHeader += AutocryptIncomingOperations.AUTOCRYPT_PARAM_TO + "=" + autocryptAddress + ";";
-            autocryptHeader += AutocryptIncomingOperations.AUTOCRYPT_PARAM_KEY_DATA + "=" + ByteString.of(keyMaterial).base64();
-            StringBuilder headerLines = new StringBuilder();
-            for (int i = 0, j = autocryptHeader.length(); i < j; i += 76) {
-                if (i +76 > j) {
-                    headerLines.append(autocryptHeader.substring(i)).append("\n ");
-                } else {
-                    headerLines.append(autocryptHeader.substring(i, i+76)).append("\n ");
-                }
-            }
-
-            String rawHeader = headerLines.toString();
-            Timber.d(rawHeader);
-            currentProcessedMimeMessage.addRawHeader("Autocrypt", rawHeader);
-        }
+        autocryptOperations.attachKeyInOpenPgpHeader(
+                openPgpApi, currentProcessedMimeMessage, autocryptAddress, autocryptId);
     }
 
     @NonNull
