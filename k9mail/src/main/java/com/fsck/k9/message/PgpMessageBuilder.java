@@ -114,6 +114,10 @@ public class PgpMessageBuilder extends MessageBuilder {
                 throw new MessagingException("Attachments are not supported in PGP/INLINE format!");
             }
 
+            if (shouldEncrypt && !cryptoStatus.hasRecipients()) {
+                throw new MessagingException("Must have recipients to build message!");
+            }
+
             if (pgpApiIntent == null) {
                 pgpApiIntent = buildOpenPgpApiIntent(shouldSign, shouldEncrypt, isPgpInlineMode);
             }
@@ -132,8 +136,7 @@ public class PgpMessageBuilder extends MessageBuilder {
     }
 
     @NonNull
-    private Intent buildOpenPgpApiIntent(boolean shouldSign, boolean shouldEncrypt, boolean isPgpInlineMode)
-            throws MessagingException {
+    private Intent buildOpenPgpApiIntent(boolean shouldSign, boolean shouldEncrypt, boolean isPgpInlineMode) {
         Intent pgpApiIntent;
         if (shouldEncrypt) {
             if (!shouldSign) {
@@ -142,17 +145,8 @@ public class PgpMessageBuilder extends MessageBuilder {
             // pgpApiIntent = new Intent(shouldSign ? OpenPgpApi.ACTION_SIGN_AND_ENCRYPT : OpenPgpApi.ACTION_ENCRYPT);
             pgpApiIntent = new Intent(OpenPgpApi.ACTION_SIGN_AND_ENCRYPT);
 
-            long[] encryptKeyIds = cryptoStatus.getEncryptKeyIds();
-            if (encryptKeyIds != null) {
-                pgpApiIntent.putExtra(OpenPgpApi.EXTRA_KEY_IDS, encryptKeyIds);
-            }
-
             if(!isDraft()) {
                 String[] encryptRecipientAddresses = cryptoStatus.getRecipientAddresses();
-                boolean hasRecipientAddresses = encryptRecipientAddresses != null && encryptRecipientAddresses.length > 0;
-                if (!hasRecipientAddresses) {
-                    throw new MessagingException("encryption is enabled, but no recipient specified!");
-                }
                 pgpApiIntent.putExtra(OpenPgpApi.EXTRA_USER_IDS, encryptRecipientAddresses);
                 pgpApiIntent.putExtra(OpenPgpApi.EXTRA_ENCRYPT_OPPORTUNISTIC, cryptoStatus.isEncryptionOpportunistic());
             }
@@ -161,7 +155,7 @@ public class PgpMessageBuilder extends MessageBuilder {
         }
 
         if (shouldSign) {
-            pgpApiIntent.putExtra(OpenPgpApi.EXTRA_SIGN_KEY_ID, cryptoStatus.getSigningKeyId());
+            pgpApiIntent.putExtra(OpenPgpApi.EXTRA_API_IDENTITY, cryptoStatus.getApiIdentity());
         }
 
         pgpApiIntent.putExtra(OpenPgpApi.EXTRA_REQUEST_ASCII_ARMOR, true);
@@ -333,5 +327,54 @@ public class PgpMessageBuilder extends MessageBuilder {
 
     public void setCryptoStatus(ComposeCryptoStatus cryptoStatus) {
         this.cryptoStatus = cryptoStatus;
+    }
+
+    public CryptoProviderDryRunStatus retrieveCryptoProviderRecipientStatus() {
+        boolean shouldSign = cryptoStatus.isSigningEnabled();
+        boolean shouldEncrypt = cryptoStatus.isEncryptionEnabled();
+        boolean isPgpInlineMode = cryptoStatus.isPgpInlineModeEnabled();
+
+        Intent apiIntent = buildOpenPgpApiIntent(shouldSign, shouldEncrypt, isPgpInlineMode);
+        apiIntent.putExtra(OpenPgpApi.EXTRA_DRY_RUN, true);
+
+        Intent result = openPgpApi.executeApi(apiIntent, (InputStream) null, null);
+        switch (result.getIntExtra(OpenPgpApi.RESULT_CODE, OpenPgpApi.RESULT_CODE_ERROR)) {
+            case OpenPgpApi.RESULT_CODE_SUCCESS:
+                if (result.getBooleanExtra(OpenPgpApi.RESULT_KEYS_CONFIRMED, false)) {
+                    return CryptoProviderDryRunStatus.OK_KEYS_CONFIRMED;
+                } else {
+                    return CryptoProviderDryRunStatus.OK_KEYS_UNCONFIRMED;
+                }
+            case OpenPgpApi.RESULT_CODE_ERROR:
+                OpenPgpError error = result.getParcelableExtra(OpenPgpApi.RESULT_ERROR);
+                if (error == null) {
+                    return CryptoProviderDryRunStatus.ERROR;
+                }
+                switch (error.getErrorId()) {
+                    case OpenPgpError.NO_USER_IDS:
+                        return CryptoProviderDryRunStatus.NO_RECIPIENTS;
+                    case OpenPgpError.OPPORTUNISTIC_MISSING_KEYS:
+                        return CryptoProviderDryRunStatus.OK_KEYS_MISSING;
+                    case OpenPgpError.IDENTITY_DISABLED:
+                        return CryptoProviderDryRunStatus.API_IDENTITY_DISABLED;
+                    case OpenPgpError.IDENTITY_KEY_NOT_CONFIGURED:
+                        return CryptoProviderDryRunStatus.API_IDENTITY_UNCONFIGURED;
+                }
+
+            case OpenPgpApi.RESULT_CODE_USER_INTERACTION_REQUIRED:
+                // should never happen, so treat as error!
+            default:
+                return CryptoProviderDryRunStatus.ERROR;
+        }
+    }
+
+    public enum CryptoProviderDryRunStatus {
+        API_IDENTITY_DISABLED,
+        API_IDENTITY_UNCONFIGURED,
+        NO_RECIPIENTS,
+        OK_KEYS_MISSING,
+        OK_KEYS_UNCONFIRMED,
+        OK_KEYS_CONFIRMED,
+        ERROR
     }
 }

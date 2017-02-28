@@ -10,6 +10,7 @@ import android.content.Intent;
 import android.os.ParcelFileDescriptor;
 
 import com.fsck.k9.Account;
+import com.fsck.k9.Identity;
 import com.fsck.k9.K9;
 import com.fsck.k9.K9RobolectricTestRunner;
 import com.fsck.k9.activity.compose.RecipientMvpView.CryptoSpecialModeDisplayType;
@@ -26,6 +27,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.openintents.openpgp.IOpenPgpService2;
+import org.openintents.openpgp.OpenPgpError;
 import org.openintents.openpgp.util.OpenPgpApi;
 import org.openintents.openpgp.util.OpenPgpServiceConnection;
 import org.openintents.openpgp.util.ShadowOpenPgpAsyncTask;
@@ -51,7 +53,7 @@ public class RecipientPresenterTest {
     private static final List<Address> ALL_TO_ADDRESSES = Arrays.asList(Address.parse("allTo@example.org"));
     private static final List<Address> ALL_CC_ADDRESSES = Arrays.asList(Address.parse("allCc@example.org"));
     private static final String CRYPTO_PROVIDER = "crypto_provider";
-    private static final long CRYPTO_KEY_ID = 123L;
+    private static final String IDENTITY_EMAIL = "fake@openkeychain.org";
 
 
     private RecipientPresenter recipientPresenter;
@@ -60,6 +62,8 @@ public class RecipientPresenterTest {
     private Account account;
     private RecipientMvpView recipientMvpView;
     private RecipientPresenter.RecipientsChangedListener listener;
+    private Identity identity;
+    private Intent noUserIdsResultIntent;
 
 
     @Before
@@ -68,14 +72,22 @@ public class RecipientPresenterTest {
 
         recipientMvpView = mock(RecipientMvpView.class);
         account = mock(Account.class);
+        identity = new Identity();
         composePgpInlineDecider = mock(ComposePgpInlineDecider.class);
         replyToParser = mock(ReplyToParser.class);
         LoaderManager loaderManager = mock(LoaderManager.class);
         listener = mock(RecipientPresenter.RecipientsChangedListener.class);
 
+        identity.setEmail(IDENTITY_EMAIL);
+
         recipientPresenter = new RecipientPresenter(
-                context, loaderManager, recipientMvpView, account, composePgpInlineDecider, replyToParser, listener);
+                context, loaderManager, recipientMvpView, account, identity, composePgpInlineDecider, listener, replyToParser);
         recipientPresenter.updateCryptoStatus();
+
+        noUserIdsResultIntent = new Intent();
+        noUserIdsResultIntent.putExtra(OpenPgpApi.RESULT_CODE, OpenPgpApi.RESULT_CODE_ERROR);
+        noUserIdsResultIntent.putExtra(
+                OpenPgpApi.RESULT_ERROR, new OpenPgpError(OpenPgpError.NO_USER_IDS, "dummy error msg"));
     }
 
     @Test
@@ -124,7 +136,7 @@ public class RecipientPresenterTest {
 
     @Test
     public void getCurrentCryptoStatus_withCryptoProvider() throws Exception {
-        setupCryptoProvider();
+        setupCryptoProvider(noUserIdsResultIntent);
 
         ComposeCryptoStatus status = recipientPresenter.getCurrentCryptoStatus();
 
@@ -134,8 +146,8 @@ public class RecipientPresenterTest {
     }
 
     @Test
-    public void getCurrentCryptoStatus_withOpportunistic() throws Exception {
-        setupCryptoProvider();
+    public void getCurrentCryptoStatus_withOpportunisticEmpty() throws Exception {
+        setupCryptoProvider(noUserIdsResultIntent);
 
         recipientPresenter.onCryptoModeChanged(CryptoMode.OPPORTUNISTIC);
         ComposeCryptoStatus status = recipientPresenter.getCurrentCryptoStatus();
@@ -146,8 +158,70 @@ public class RecipientPresenterTest {
     }
 
     @Test
+    public void getCurrentCryptoStatus_withOpportunistic() throws Exception {
+        Intent resultIntent = new Intent();
+        resultIntent.putExtra(OpenPgpApi.RESULT_CODE, OpenPgpApi.RESULT_CODE_SUCCESS);
+        resultIntent.putExtra(OpenPgpApi.RESULT_KEYS_CONFIRMED, false);
+        setupCryptoProvider(resultIntent);
+
+        recipientPresenter.onCryptoModeChanged(CryptoMode.OPPORTUNISTIC);
+        ComposeCryptoStatus status = recipientPresenter.getCurrentCryptoStatus();
+
+        assertEquals(CryptoStatusDisplayType.OPPORTUNISTIC_UNTRUSTED, status.getCryptoStatusDisplayType());
+        assertTrue(status.isProviderStateOk());
+        assertTrue(status.shouldUsePgpMessageBuilder());
+    }
+
+    @Test
+    public void getCurrentCryptoStatus_withOpportunistic__missingKeys() throws Exception {
+        Intent resultIntent = new Intent();
+        resultIntent.putExtra(OpenPgpApi.RESULT_CODE, OpenPgpApi.RESULT_CODE_ERROR);
+        resultIntent.putExtra(OpenPgpApi.RESULT_ERROR, new OpenPgpError(OpenPgpError.OPPORTUNISTIC_MISSING_KEYS,
+                "dummy error msg"));
+        setupCryptoProvider(resultIntent);
+
+        recipientPresenter.onCryptoModeChanged(CryptoMode.OPPORTUNISTIC);
+        ComposeCryptoStatus status = recipientPresenter.getCurrentCryptoStatus();
+
+        assertEquals(CryptoStatusDisplayType.OPPORTUNISTIC_NOKEY, status.getCryptoStatusDisplayType());
+        assertTrue(status.isProviderStateOk());
+        assertTrue(status.shouldUsePgpMessageBuilder());
+    }
+
+    @Test
+    public void getCurrentCryptoStatus_withOpportunistic__privateMissingKeys() throws Exception {
+        Intent resultIntent = new Intent();
+        resultIntent.putExtra(OpenPgpApi.RESULT_CODE, OpenPgpApi.RESULT_CODE_ERROR);
+        resultIntent.putExtra(OpenPgpApi.RESULT_ERROR, new OpenPgpError(OpenPgpError.OPPORTUNISTIC_MISSING_KEYS,
+                "dummy error msg"));
+        setupCryptoProvider(resultIntent);
+
+        recipientPresenter.onCryptoModeChanged(CryptoMode.PRIVATE);
+        ComposeCryptoStatus status = recipientPresenter.getCurrentCryptoStatus();
+
+        assertEquals(CryptoStatusDisplayType.PRIVATE_NOKEY, status.getCryptoStatusDisplayType());
+        assertTrue(status.isProviderStateOk());
+        assertTrue(status.shouldUsePgpMessageBuilder());
+    }
+
+    @Test
+    public void getCurrentCryptoStatus_withOpportunistic__confirmed() throws Exception {
+        Intent resultIntent = new Intent();
+        resultIntent.putExtra(OpenPgpApi.RESULT_CODE, OpenPgpApi.RESULT_CODE_SUCCESS);
+        resultIntent.putExtra(OpenPgpApi.RESULT_KEYS_CONFIRMED, true);
+        setupCryptoProvider(resultIntent);
+
+        recipientPresenter.onCryptoModeChanged(CryptoMode.OPPORTUNISTIC);
+        ComposeCryptoStatus status = recipientPresenter.getCurrentCryptoStatus();
+
+        assertEquals(CryptoStatusDisplayType.OPPORTUNISTIC_TRUSTED, status.getCryptoStatusDisplayType());
+        assertTrue(status.isProviderStateOk());
+        assertTrue(status.shouldUsePgpMessageBuilder());
+    }
+
+    @Test
     public void getCurrentCryptoStatus_withModeDisabled() throws Exception {
-        setupCryptoProvider();
+        setupCryptoProvider(noUserIdsResultIntent);
 
         recipientPresenter.onCryptoModeChanged(CryptoMode.DISABLE);
         ComposeCryptoStatus status = recipientPresenter.getCurrentCryptoStatus();
@@ -159,7 +233,7 @@ public class RecipientPresenterTest {
 
     @Test
     public void getCurrentCryptoStatus_withModePrivate() throws Exception {
-        setupCryptoProvider();
+        setupCryptoProvider(noUserIdsResultIntent);
 
         recipientPresenter.onCryptoModeChanged(CryptoMode.PRIVATE);
         ComposeCryptoStatus status = recipientPresenter.getCurrentCryptoStatus();
@@ -171,7 +245,7 @@ public class RecipientPresenterTest {
 
     @Test
     public void getCurrentCryptoStatus_withModeSignOnly() throws Exception {
-        setupCryptoProvider();
+        setupCryptoProvider(noUserIdsResultIntent);
 
         recipientPresenter.onMenuSetSignOnly(true);
         ComposeCryptoStatus status = recipientPresenter.getCurrentCryptoStatus();
@@ -184,7 +258,7 @@ public class RecipientPresenterTest {
 
     @Test
     public void getCurrentCryptoStatus_withModeInline() throws Exception {
-        setupCryptoProvider();
+        setupCryptoProvider(noUserIdsResultIntent);
 
         recipientPresenter.onMenuSetPgpInline(true);
         ComposeCryptoStatus status = recipientPresenter.getCurrentCryptoStatus();
@@ -248,7 +322,7 @@ public class RecipientPresenterTest {
         verify(listener).onRecipientsChanged();
     }
 
-    private void setupCryptoProvider() throws android.os.RemoteException {
+    private void setupCryptoProvider(Intent returnedIntent) throws android.os.RemoteException {
         Account account = mock(Account.class);
         OpenPgpServiceConnection openPgpServiceConnection = mock(OpenPgpServiceConnection.class);
         IOpenPgpService2 openPgpService2 = mock(IOpenPgpService2.class);
@@ -256,11 +330,10 @@ public class RecipientPresenterTest {
 
         K9.setOpenPgpProvider(CRYPTO_PROVIDER);
         permissionPingIntent.putExtra(OpenPgpApi.RESULT_CODE, OpenPgpApi.RESULT_CODE_SUCCESS);
-        when(account.getCryptoKey()).thenReturn(CRYPTO_KEY_ID);
         when(openPgpServiceConnection.isBound()).thenReturn(true);
         when(openPgpServiceConnection.getService()).thenReturn(openPgpService2);
         when(openPgpService2.execute(any(Intent.class), any(ParcelFileDescriptor.class), any(Integer.class)))
-                .thenReturn(permissionPingIntent);
+                .thenReturn(permissionPingIntent, returnedIntent);
 
         Robolectric.getBackgroundThreadScheduler().pause();
         recipientPresenter.setOpenPgpServiceConnection(openPgpServiceConnection, CRYPTO_PROVIDER);

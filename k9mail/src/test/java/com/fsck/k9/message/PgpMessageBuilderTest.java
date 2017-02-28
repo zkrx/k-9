@@ -62,9 +62,8 @@ import static org.mockito.Mockito.when;
 
 @RunWith(K9RobolectricTestRunner.class)
 public class PgpMessageBuilderTest {
-    private static final long TEST_SIGN_KEY_ID = 123L;
-    private static final long TEST_SELF_ENCRYPT_KEY_ID = 234L;
     private static final String TEST_MESSAGE_TEXT = "message text with a ☭ CCCP symbol";
+    private static final String API_IDENTITY = "test@example.org";
 
 
     private ComposeCryptoStatusBuilder cryptoStatusBuilder = createDefaultComposeCryptoStatusBuilder();
@@ -133,8 +132,8 @@ public class PgpMessageBuilderTest {
         pgpMessageBuilder.buildAsync(mockCallback);
 
         Intent expectedIntent = new Intent(OpenPgpApi.ACTION_DETACHED_SIGN);
-        expectedIntent.putExtra(OpenPgpApi.EXTRA_SIGN_KEY_ID, TEST_SIGN_KEY_ID);
         expectedIntent.putExtra(OpenPgpApi.EXTRA_REQUEST_ASCII_ARMOR, true);
+        expectedIntent.putExtra(OpenPgpApi.EXTRA_API_IDENTITY, API_IDENTITY);
         assertIntentEqualsActionAndExtras(expectedIntent, capturedApiIntent.getValue());
 
         ArgumentCaptor<MimeMessage> captor = ArgumentCaptor.forClass(MimeMessage.class);
@@ -274,11 +273,10 @@ public class PgpMessageBuilderTest {
         pgpMessageBuilder.buildAsync(mockCallback);
 
         Intent expectedApiIntent = new Intent(OpenPgpApi.ACTION_SIGN_AND_ENCRYPT);
-        expectedApiIntent.putExtra(OpenPgpApi.EXTRA_SIGN_KEY_ID, TEST_SIGN_KEY_ID);
-        expectedApiIntent.putExtra(OpenPgpApi.EXTRA_KEY_IDS, new long[] { TEST_SELF_ENCRYPT_KEY_ID });
         expectedApiIntent.putExtra(OpenPgpApi.EXTRA_REQUEST_ASCII_ARMOR, true);
         expectedApiIntent.putExtra(OpenPgpApi.EXTRA_ENCRYPT_OPPORTUNISTIC, false);
         expectedApiIntent.putExtra(OpenPgpApi.EXTRA_USER_IDS, cryptoStatus.getRecipientAddresses());
+        expectedApiIntent.putExtra(OpenPgpApi.EXTRA_API_IDENTITY, API_IDENTITY);
         assertIntentEqualsActionAndExtras(expectedApiIntent, capturedApiIntent.getValue());
 
         ArgumentCaptor<MimeMessage> captor = ArgumentCaptor.forClass(MimeMessage.class);
@@ -327,11 +325,10 @@ public class PgpMessageBuilderTest {
         pgpMessageBuilder.buildAsync(mockCallback);
 
         Intent expectedApiIntent = new Intent(OpenPgpApi.ACTION_SIGN_AND_ENCRYPT);
-        expectedApiIntent.putExtra(OpenPgpApi.EXTRA_SIGN_KEY_ID, TEST_SIGN_KEY_ID);
-        expectedApiIntent.putExtra(OpenPgpApi.EXTRA_KEY_IDS, new long[] { TEST_SELF_ENCRYPT_KEY_ID });
         expectedApiIntent.putExtra(OpenPgpApi.EXTRA_REQUEST_ASCII_ARMOR, true);
         expectedApiIntent.putExtra(OpenPgpApi.EXTRA_ENCRYPT_OPPORTUNISTIC, false);
         expectedApiIntent.putExtra(OpenPgpApi.EXTRA_USER_IDS, cryptoStatus.getRecipientAddresses());
+        expectedApiIntent.putExtra(OpenPgpApi.EXTRA_API_IDENTITY, API_IDENTITY);
         assertIntentEqualsActionAndExtras(expectedApiIntent, capturedApiIntent.getValue());
 
         ArgumentCaptor<MimeMessage> captor = ArgumentCaptor.forClass(MimeMessage.class);
@@ -365,8 +362,8 @@ public class PgpMessageBuilderTest {
         pgpMessageBuilder.buildAsync(mockCallback);
 
         Intent expectedApiIntent = new Intent(OpenPgpApi.ACTION_SIGN);
-        expectedApiIntent.putExtra(OpenPgpApi.EXTRA_SIGN_KEY_ID, TEST_SIGN_KEY_ID);
         expectedApiIntent.putExtra(OpenPgpApi.EXTRA_REQUEST_ASCII_ARMOR, true);
+        expectedApiIntent.putExtra(OpenPgpApi.EXTRA_API_IDENTITY, API_IDENTITY);
         assertIntentEqualsActionAndExtras(expectedApiIntent, capturedApiIntent.getValue());
 
         ArgumentCaptor<MimeMessage> captor = ArgumentCaptor.forClass(MimeMessage.class);
@@ -466,10 +463,9 @@ public class PgpMessageBuilderTest {
     private ComposeCryptoStatusBuilder createDefaultComposeCryptoStatusBuilder() {
         return new ComposeCryptoStatusBuilder()
                 .setEnablePgpInline(false)
-                .setSigningKeyId(TEST_SIGN_KEY_ID)
-                .setSelfEncryptId(TEST_SELF_ENCRYPT_KEY_ID)
                 .setRecipients(new ArrayList<Recipient>())
-                .setCryptoProviderState(CryptoProviderState.OK);
+                .setCryptoProviderState(CryptoProviderState.OK)
+                .setApiIdentity(API_IDENTITY);
     }
 
     private static PgpMessageBuilder createDefaultPgpMessageBuilder(OpenPgpApi openPgpApi) {

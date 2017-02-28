@@ -8,8 +8,8 @@ import com.fsck.k9.activity.compose.RecipientMvpView.CryptoSpecialModeDisplayTyp
 import com.fsck.k9.activity.compose.RecipientMvpView.CryptoStatusDisplayType;
 import com.fsck.k9.activity.compose.RecipientPresenter.CryptoMode;
 import com.fsck.k9.activity.compose.RecipientPresenter.CryptoProviderState;
+import com.fsck.k9.message.PgpMessageBuilder.CryptoProviderDryRunStatus;
 import com.fsck.k9.view.RecipientSelectView.Recipient;
-import com.fsck.k9.view.RecipientSelectView.RecipientCryptoStatus;
 
 /** This is an immutable object which contains all relevant metadata entered
  * during e-mail composition to apply cryptographic operations before sending
@@ -19,29 +19,15 @@ public class ComposeCryptoStatus {
 
 
     private CryptoProviderState cryptoProviderState;
-    private CryptoMode cryptoMode;
-    private boolean allKeysAvailable;
-    private boolean allKeysVerified;
-    private boolean hasRecipients;
-    private Long signingKeyId;
-    private Long selfEncryptKeyId;
+    private CryptoProviderDryRunStatus cryptoProviderDryRunStatus;
     private String[] recipientAddresses;
+    private String apiIdentity;
     private boolean enablePgpInline;
+    private CryptoMode cryptoMode;
 
 
-    public long[] getEncryptKeyIds() {
-        if (selfEncryptKeyId == null) {
-            return null;
-        }
-        return new long[] { selfEncryptKeyId };
-    }
-
-    public String[] getRecipientAddresses() {
-        return recipientAddresses;
-    }
-
-    public Long getSigningKeyId() {
-        return signingKeyId;
+    boolean isCryptoStatusRecipientDependent() {
+        return cryptoProviderState == CryptoProviderState.OK && cryptoMode != CryptoMode.DISABLE;
     }
 
     CryptoStatusDisplayType getCryptoStatusDisplayType() {
@@ -60,22 +46,41 @@ public class ComposeCryptoStatus {
                 throw new AssertionError("all CryptoProviderStates must be handled!");
         }
 
+        if (cryptoMode == CryptoMode.DISABLE) {
+            return CryptoStatusDisplayType.DISABLED;
+        }
+
+        if (cryptoProviderDryRunStatus == null) {
+            throw new IllegalStateException("Display type must be obtained from provider!");
+        }
+
+        switch (cryptoProviderDryRunStatus) {
+            case API_IDENTITY_DISABLED:
+                return CryptoStatusDisplayType.DISABLED;
+
+            case API_IDENTITY_UNCONFIGURED:
+                return CryptoStatusDisplayType.API_IDENTITY_UNCONFIGURED;
+
+            case ERROR:
+                return CryptoStatusDisplayType.ERROR;
+        }
+
         switch (cryptoMode) {
             case PRIVATE:
-                if (!hasRecipients) {
+                if (cryptoProviderDryRunStatus == CryptoProviderDryRunStatus.NO_RECIPIENTS) {
                     return CryptoStatusDisplayType.PRIVATE_EMPTY;
-                } else if (allKeysAvailable && allKeysVerified) {
+                } else if (cryptoProviderDryRunStatus == CryptoProviderDryRunStatus.OK_KEYS_CONFIRMED) {
                     return CryptoStatusDisplayType.PRIVATE_TRUSTED;
-                } else if (allKeysAvailable) {
+                } else if (cryptoProviderDryRunStatus == CryptoProviderDryRunStatus.OK_KEYS_UNCONFIRMED) {
                     return CryptoStatusDisplayType.PRIVATE_UNTRUSTED;
                 }
                 return CryptoStatusDisplayType.PRIVATE_NOKEY;
             case OPPORTUNISTIC:
-                if (!hasRecipients) {
+                if (cryptoProviderDryRunStatus == CryptoProviderDryRunStatus.NO_RECIPIENTS) {
                     return CryptoStatusDisplayType.OPPORTUNISTIC_EMPTY;
-                } else if (allKeysAvailable && allKeysVerified) {
+                } else if (cryptoProviderDryRunStatus == CryptoProviderDryRunStatus.OK_KEYS_CONFIRMED) {
                     return CryptoStatusDisplayType.OPPORTUNISTIC_TRUSTED;
-                } else if (allKeysAvailable) {
+                } else if (cryptoProviderDryRunStatus == CryptoProviderDryRunStatus.OK_KEYS_UNCONFIRMED) {
                     return CryptoStatusDisplayType.OPPORTUNISTIC_UNTRUSTED;
                 }
                 return CryptoStatusDisplayType.OPPORTUNISTIC_NOKEY;
@@ -120,12 +125,12 @@ public class ComposeCryptoStatus {
         return cryptoMode == CryptoMode.OPPORTUNISTIC;
     }
 
-    public boolean isSignOnly() {
+    boolean isSignOnly() {
         return cryptoMode == CryptoMode.SIGN_ONLY;
     }
 
     public boolean isSigningEnabled() {
-        return cryptoMode != CryptoMode.DISABLE && signingKeyId != null;
+        return cryptoMode != CryptoMode.DISABLE;
     }
 
     public boolean isPgpInlineModeEnabled() {
@@ -140,13 +145,24 @@ public class ComposeCryptoStatus {
         return cryptoProviderState == CryptoProviderState.OK;
     }
 
+    public String getApiIdentity() {
+        return apiIdentity;
+    }
+
+    public String[] getRecipientAddresses() {
+        return recipientAddresses;
+    }
+
+    public boolean hasRecipients() {
+        return recipientAddresses.length > 0;
+    }
+
     public static class ComposeCryptoStatusBuilder {
 
         private CryptoProviderState cryptoProviderState;
         private CryptoMode cryptoMode;
-        private Long signingKeyId;
-        private Long selfEncryptKeyId;
         private List<Recipient> recipients;
+        private String apiIdentity;
         private Boolean enablePgpInline;
 
         public ComposeCryptoStatusBuilder setCryptoProviderState(CryptoProviderState cryptoProviderState) {
@@ -156,16 +172,6 @@ public class ComposeCryptoStatus {
 
         public ComposeCryptoStatusBuilder setCryptoMode(CryptoMode cryptoMode) {
             this.cryptoMode = cryptoMode;
-            return this;
-        }
-
-        public ComposeCryptoStatusBuilder setSigningKeyId(long signingKeyId) {
-            this.signingKeyId = signingKeyId;
-            return this;
-        }
-
-        public ComposeCryptoStatusBuilder setSelfEncryptId(long selfEncryptKeyId) {
-            this.selfEncryptKeyId = selfEncryptKeyId;
             return this;
         }
 
@@ -179,6 +185,11 @@ public class ComposeCryptoStatus {
             return this;
         }
 
+        public ComposeCryptoStatusBuilder setApiIdentity(String apiIdentity) {
+            this.apiIdentity = apiIdentity;
+            return this;
+        }
+
         public ComposeCryptoStatus build() {
             if (cryptoProviderState == null) {
                 throw new AssertionError("cryptoProviderState must be set!");
@@ -189,56 +200,47 @@ public class ComposeCryptoStatus {
             if (recipients == null) {
                 throw new AssertionError("recipients must be set!");
             }
+            if (apiIdentity == null) {
+                throw new AssertionError("apiIdentity must be set!");
+            }
             if (enablePgpInline == null) {
                 throw new AssertionError("enablePgpInline must be set!");
             }
 
             ArrayList<String> recipientAddresses = new ArrayList<>();
-            boolean allKeysAvailable = true;
-            boolean allKeysVerified = true;
-            boolean hasRecipients = !recipients.isEmpty();
             for (Recipient recipient : recipients) {
-                RecipientCryptoStatus cryptoStatus = recipient.getCryptoStatus();
                 recipientAddresses.add(recipient.address.getAddress());
-                if (cryptoStatus.isAvailable()) {
-                    if (cryptoStatus == RecipientCryptoStatus.AVAILABLE_UNTRUSTED) {
-                        allKeysVerified = false;
-                    }
-                } else {
-                    allKeysAvailable = false;
-                }
             }
 
             ComposeCryptoStatus result = new ComposeCryptoStatus();
             result.cryptoProviderState = cryptoProviderState;
             result.cryptoMode = cryptoMode;
             result.recipientAddresses = recipientAddresses.toArray(new String[0]);
-            result.allKeysAvailable = allKeysAvailable;
-            result.allKeysVerified = allKeysVerified;
-            result.hasRecipients = hasRecipients;
-            result.signingKeyId = signingKeyId;
-            result.selfEncryptKeyId = selfEncryptKeyId;
+            result.apiIdentity = apiIdentity;
             result.enablePgpInline = enablePgpInline;
             return result;
         }
     }
 
+    ComposeCryptoStatus withCryptoProviderRecipientStatus(CryptoProviderDryRunStatus cryptoProviderDryRunStatus) {
+        ComposeCryptoStatus result = new ComposeCryptoStatus();
+        result.cryptoProviderState = cryptoProviderState;
+        result.cryptoMode = cryptoMode;
+        result.recipientAddresses = recipientAddresses;
+        result.apiIdentity = apiIdentity;
+        result.enablePgpInline = enablePgpInline;
+        result.cryptoProviderDryRunStatus = cryptoProviderDryRunStatus;
+        return result;
+    }
+
     public enum SendErrorState {
-        PROVIDER_ERROR, SIGN_KEY_NOT_CONFIGURED, PRIVATE_BUT_MISSING_KEYS
+        PROVIDER_ERROR
     }
 
     public SendErrorState getSendErrorStateOrNull() {
         if (cryptoProviderState != CryptoProviderState.OK) {
             // TODO: be more specific about this error
             return SendErrorState.PROVIDER_ERROR;
-        }
-        boolean isSignKeyMissing = signingKeyId == null;
-        if (isSignKeyMissing) {
-            return SendErrorState.SIGN_KEY_NOT_CONFIGURED;
-        }
-        boolean isPrivateModeAndNotAllKeysAvailable = cryptoMode == CryptoMode.PRIVATE && !allKeysAvailable;
-        if (isPrivateModeAndNotAllKeysAvailable) {
-            return SendErrorState.PRIVATE_BUT_MISSING_KEYS;
         }
 
         return null;

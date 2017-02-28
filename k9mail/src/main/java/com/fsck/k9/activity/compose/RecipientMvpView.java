@@ -35,6 +35,7 @@ public class RecipientMvpView implements OnFocusChangeListener, OnClickListener 
     private static final int VIEW_INDEX_CRYPTO_STATUS_DISABLED_NO_KEY = 4;
     private static final int VIEW_INDEX_CRYPTO_STATUS_UNTRUSTED = 5;
     private static final int VIEW_INDEX_CRYPTO_STATUS_TRUSTED = 6;
+    private static final int VIEW_INDEX_CRYPTO_API_IDENTITY_UNCONFIGURED = 7;
     private static final int VIEW_INDEX_CRYPTO_STATUS_SIGN_ONLY = 0;
 
     private static final int VIEW_INDEX_CRYPTO_SPECIAL_PGP_INLINE = 0;
@@ -432,6 +433,7 @@ public class RecipientMvpView implements OnFocusChangeListener, OnClickListener 
         UNCONFIGURED(VIEW_INDEX_HIDDEN),
         UNINITIALIZED(VIEW_INDEX_HIDDEN),
         DISABLED(VIEW_INDEX_CRYPTO_STATUS_DISABLED),
+        API_IDENTITY_UNCONFIGURED(VIEW_INDEX_CRYPTO_API_IDENTITY_UNCONFIGURED),
         SIGN_ONLY(VIEW_INDEX_CRYPTO_STATUS_SIGN_ONLY),
         OPPORTUNISTIC_EMPTY(VIEW_INDEX_CRYPTO_STATUS_NO_RECIPIENTS),
         OPPORTUNISTIC_NOKEY(VIEW_INDEX_CRYPTO_STATUS_DISABLED_NO_KEY),

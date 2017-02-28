@@ -68,7 +68,6 @@ import com.fsck.k9.activity.misc.Attachment;
 import com.fsck.k9.controller.MessagingController;
 import com.fsck.k9.controller.MessagingListener;
 import com.fsck.k9.controller.SimpleMessagingListener;
-import com.fsck.k9.crypto.OpenPgpApiHelper;
 import com.fsck.k9.fragment.ProgressDialogFragment;
 import com.fsck.k9.fragment.ProgressDialogFragment.CancelListener;
 import com.fsck.k9.helper.Contacts;
@@ -643,12 +642,11 @@ public class MessageCompose extends K9Activity implements OnClickListener, Cance
             builder = SimpleMessageBuilder.newInstance();
         }
 
+        recipientPresenter.builderSetProperties(builder);
+
         builder.setSubject(Utility.stripNewLines(subjectView.getText().toString()))
                 .setSentDate(new Date())
                 .setHideTimeZone(K9.hideTimeZone())
-                .setTo(recipientPresenter.getToAddresses())
-                .setCc(recipientPresenter.getCcAddresses())
-                .setBcc(recipientPresenter.getBccAddresses())
                 .setInReplyTo(repliedToMessageId)
                 .setReferences(referencedMessageIds)
                 .setRequestReadReceipt(requestReadReceipt)
