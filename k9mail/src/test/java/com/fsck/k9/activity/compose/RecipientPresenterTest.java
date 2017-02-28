@@ -46,6 +46,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 
+@SuppressWarnings("ConstantConditions")
 @RunWith(K9RobolectricTestRunner.class)
 @Config(shadows = {ShadowOpenPgpAsyncTask.class})
 public class RecipientPresenterTest {
@@ -82,7 +83,7 @@ public class RecipientPresenterTest {
 
         recipientPresenter = new RecipientPresenter(
                 context, loaderManager, recipientMvpView, account, identity, composePgpInlineDecider, listener, replyToParser);
-        recipientPresenter.updateCryptoStatus();
+        recipientPresenter.asyncUpdateCryptoStatus();
 
         noUserIdsResultIntent = new Intent();
         noUserIdsResultIntent.putExtra(OpenPgpApi.RESULT_CODE, OpenPgpApi.RESULT_CODE_ERROR);
@@ -125,7 +126,7 @@ public class RecipientPresenterTest {
 
     @Test
     public void getCurrentCryptoStatus_withoutCryptoProvider() throws Exception {
-        ComposeCryptoStatus status = recipientPresenter.getCurrentCryptoStatus();
+        ComposeCryptoStatus status = recipientPresenter.getCurrentCachedCryptoStatus();
 
         assertEquals(CryptoStatusDisplayType.UNCONFIGURED, status.getCryptoStatusDisplayType());
         assertEquals(CryptoSpecialModeDisplayType.NONE, status.getCryptoSpecialModeDisplayType());
@@ -138,7 +139,8 @@ public class RecipientPresenterTest {
     public void getCurrentCryptoStatus_withCryptoProvider() throws Exception {
         setupCryptoProvider(noUserIdsResultIntent);
 
-        ComposeCryptoStatus status = recipientPresenter.getCurrentCryptoStatus();
+        Robolectric.getBackgroundThreadScheduler().runOneTask();
+        ComposeCryptoStatus status = recipientPresenter.getCurrentCachedCryptoStatus();
 
         assertEquals(CryptoStatusDisplayType.OPPORTUNISTIC_EMPTY, status.getCryptoStatusDisplayType());
         assertTrue(status.isProviderStateOk());
@@ -150,7 +152,8 @@ public class RecipientPresenterTest {
         setupCryptoProvider(noUserIdsResultIntent);
 
         recipientPresenter.onCryptoModeChanged(CryptoMode.OPPORTUNISTIC);
-        ComposeCryptoStatus status = recipientPresenter.getCurrentCryptoStatus();
+        Robolectric.getBackgroundThreadScheduler().runOneTask();
+        ComposeCryptoStatus status = recipientPresenter.getCurrentCachedCryptoStatus();
 
         assertEquals(CryptoStatusDisplayType.OPPORTUNISTIC_EMPTY, status.getCryptoStatusDisplayType());
         assertTrue(status.isProviderStateOk());
@@ -165,7 +168,8 @@ public class RecipientPresenterTest {
         setupCryptoProvider(resultIntent);
 
         recipientPresenter.onCryptoModeChanged(CryptoMode.OPPORTUNISTIC);
-        ComposeCryptoStatus status = recipientPresenter.getCurrentCryptoStatus();
+        Robolectric.getBackgroundThreadScheduler().runOneTask();
+        ComposeCryptoStatus status = recipientPresenter.getCurrentCachedCryptoStatus();
 
         assertEquals(CryptoStatusDisplayType.OPPORTUNISTIC_UNTRUSTED, status.getCryptoStatusDisplayType());
         assertTrue(status.isProviderStateOk());
@@ -181,7 +185,8 @@ public class RecipientPresenterTest {
         setupCryptoProvider(resultIntent);
 
         recipientPresenter.onCryptoModeChanged(CryptoMode.OPPORTUNISTIC);
-        ComposeCryptoStatus status = recipientPresenter.getCurrentCryptoStatus();
+        Robolectric.getBackgroundThreadScheduler().runOneTask();
+        ComposeCryptoStatus status = recipientPresenter.getCurrentCachedCryptoStatus();
 
         assertEquals(CryptoStatusDisplayType.OPPORTUNISTIC_NOKEY, status.getCryptoStatusDisplayType());
         assertTrue(status.isProviderStateOk());
@@ -197,7 +202,8 @@ public class RecipientPresenterTest {
         setupCryptoProvider(resultIntent);
 
         recipientPresenter.onCryptoModeChanged(CryptoMode.PRIVATE);
-        ComposeCryptoStatus status = recipientPresenter.getCurrentCryptoStatus();
+        Robolectric.getBackgroundThreadScheduler().runOneTask();
+        ComposeCryptoStatus status = recipientPresenter.getCurrentCachedCryptoStatus();
 
         assertEquals(CryptoStatusDisplayType.PRIVATE_NOKEY, status.getCryptoStatusDisplayType());
         assertTrue(status.isProviderStateOk());
@@ -212,7 +218,8 @@ public class RecipientPresenterTest {
         setupCryptoProvider(resultIntent);
 
         recipientPresenter.onCryptoModeChanged(CryptoMode.OPPORTUNISTIC);
-        ComposeCryptoStatus status = recipientPresenter.getCurrentCryptoStatus();
+        Robolectric.getBackgroundThreadScheduler().runOneTask();
+        ComposeCryptoStatus status = recipientPresenter.getCurrentCachedCryptoStatus();
 
         assertEquals(CryptoStatusDisplayType.OPPORTUNISTIC_TRUSTED, status.getCryptoStatusDisplayType());
         assertTrue(status.isProviderStateOk());
@@ -224,7 +231,8 @@ public class RecipientPresenterTest {
         setupCryptoProvider(noUserIdsResultIntent);
 
         recipientPresenter.onCryptoModeChanged(CryptoMode.DISABLE);
-        ComposeCryptoStatus status = recipientPresenter.getCurrentCryptoStatus();
+        Robolectric.getBackgroundThreadScheduler().runOneTask();
+        ComposeCryptoStatus status = recipientPresenter.getCurrentCachedCryptoStatus();
 
         assertEquals(CryptoStatusDisplayType.DISABLED, status.getCryptoStatusDisplayType());
         assertTrue(status.isProviderStateOk());
@@ -236,7 +244,8 @@ public class RecipientPresenterTest {
         setupCryptoProvider(noUserIdsResultIntent);
 
         recipientPresenter.onCryptoModeChanged(CryptoMode.PRIVATE);
-        ComposeCryptoStatus status = recipientPresenter.getCurrentCryptoStatus();
+        Robolectric.getBackgroundThreadScheduler().runOneTask();
+        ComposeCryptoStatus status = recipientPresenter.getCurrentCachedCryptoStatus();
 
         assertEquals(CryptoStatusDisplayType.PRIVATE_EMPTY, status.getCryptoStatusDisplayType());
         assertTrue(status.isProviderStateOk());
@@ -248,7 +257,8 @@ public class RecipientPresenterTest {
         setupCryptoProvider(noUserIdsResultIntent);
 
         recipientPresenter.onMenuSetSignOnly(true);
-        ComposeCryptoStatus status = recipientPresenter.getCurrentCryptoStatus();
+        Robolectric.getBackgroundThreadScheduler().runOneTask();
+        ComposeCryptoStatus status = recipientPresenter.getCurrentCachedCryptoStatus();
 
         assertEquals(CryptoStatusDisplayType.SIGN_ONLY, status.getCryptoStatusDisplayType());
         assertTrue(status.isProviderStateOk());
@@ -261,7 +271,8 @@ public class RecipientPresenterTest {
         setupCryptoProvider(noUserIdsResultIntent);
 
         recipientPresenter.onMenuSetPgpInline(true);
-        ComposeCryptoStatus status = recipientPresenter.getCurrentCryptoStatus();
+        Robolectric.getBackgroundThreadScheduler().runOneTask();
+        ComposeCryptoStatus status = recipientPresenter.getCurrentCachedCryptoStatus();
 
         assertEquals(CryptoStatusDisplayType.OPPORTUNISTIC_EMPTY, status.getCryptoStatusDisplayType());
         assertTrue(status.isProviderStateOk());
@@ -338,7 +349,7 @@ public class RecipientPresenterTest {
         Robolectric.getBackgroundThreadScheduler().pause();
         recipientPresenter.setOpenPgpServiceConnection(openPgpServiceConnection, CRYPTO_PROVIDER);
         recipientPresenter.onSwitchAccount(account);
-        recipientPresenter.updateCryptoStatus();
+        recipientPresenter.asyncUpdateCryptoStatus();
         Robolectric.getBackgroundThreadScheduler().runOneTask();
     }
 }

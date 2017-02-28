@@ -274,7 +274,7 @@ public class MessageCompose extends K9Activity implements OnClickListener, Cance
         ComposePgpInlineDecider composePgpInlineDecider = new ComposePgpInlineDecider();
         recipientPresenter = new RecipientPresenter(getApplicationContext(), getLoaderManager(), recipientMvpView,
                 account, identity, composePgpInlineDecider, this, new ReplyToParser());
-        recipientPresenter.updateCryptoStatus();
+        recipientPresenter.asyncUpdateCryptoStatus();
 
         contacts = Contacts.getInstance(MessageCompose.this);
 
@@ -625,8 +625,11 @@ public class MessageCompose extends K9Activity implements OnClickListener, Cance
     private MessageBuilder createMessageBuilder(boolean isDraft) {
         MessageBuilder builder;
 
-        recipientPresenter.updateCryptoStatus();
-        ComposeCryptoStatus cryptoStatus = recipientPresenter.getCurrentCryptoStatus();
+        ComposeCryptoStatus cryptoStatus = recipientPresenter.getCurrentCachedCryptoStatus();
+        if (cryptoStatus == null) {
+            return null;
+        }
+
         // TODO encrypt drafts for storage
         if (!isDraft && cryptoStatus.shouldUsePgpMessageBuilder()) {
             SendErrorState maybeSendErrorState = cryptoStatus.getSendErrorStateOrNull();
@@ -1464,8 +1467,7 @@ public class MessageCompose extends K9Activity implements OnClickListener, Cance
                 message.setUid(relatedMessageReference.getUid());
             }
 
-            // TODO more appropriate logic here? not sure
-            boolean saveRemotely = !recipientPresenter.getCurrentCryptoStatus().shouldUsePgpMessageBuilder();
+            boolean saveRemotely = recipientPresenter.shouldSaveRemotely();
             new SaveMessageTask(getApplicationContext(), account, contacts, internalMessageHandler,
                     message, draftId, saveRemotely).execute();
             if (finishAfterDraftSaved) {
