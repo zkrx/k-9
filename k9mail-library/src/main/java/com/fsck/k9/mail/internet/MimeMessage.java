@@ -324,7 +324,7 @@ public class MimeMessage extends Message {
     @Override
     public String[] getReferences() {
         if (mReferences == null) {
-            mReferences = getHeader("References");
+            mReferences = getUnparsedHeader("References");
         }
         return mReferences;
     }
@@ -397,7 +397,7 @@ public class MimeMessage extends Message {
 
     @NonNull
     @Override
-    public String[] getHeader(String name) {
+    public String[] getUnparsedHeader(String name) {
         return mHeader.getHeader(name);
     }
 

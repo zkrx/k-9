@@ -989,7 +989,7 @@ public class ImapFolderTest {
     public void getUidFromMessageId_withoutMessageIdHeader_shouldReturnNull() throws Exception {
         ImapFolder folder = createFolder("Folder");
         ImapMessage message = createImapMessage("2");
-        when(message.getHeader("Message-ID")).thenReturn(new String[0]);
+        when(message.getUnparsedHeader("Message-ID")).thenReturn(new String[0]);
 
         String uid = folder.getUidFromMessageId(message);
 
@@ -1002,7 +1002,7 @@ public class ImapFolderTest {
         prepareImapFolderForOpen(OPEN_MODE_RW);
         folder.open(OPEN_MODE_RW);
         ImapMessage message = createImapMessage("2");
-        when(message.getHeader("Message-ID")).thenReturn(new String[] { "<00000000.0000000@example.org>" });
+        when(message.getUnparsedHeader("Message-ID")).thenReturn(new String[] { "<00000000.0000000@example.org>" });
 
         folder.getUidFromMessageId(message);
 
@@ -1015,7 +1015,7 @@ public class ImapFolderTest {
         prepareImapFolderForOpen(OPEN_MODE_RW);
         folder.open(OPEN_MODE_RW);
         ImapMessage message = createImapMessage("2");
-        when(message.getHeader("Message-ID")).thenReturn(new String[] { "<00000000.0000000@example.org>" });
+        when(message.getUnparsedHeader("Message-ID")).thenReturn(new String[] { "<00000000.0000000@example.org>" });
         when(imapConnection.executeSimpleCommand("UID SEARCH HEADER MESSAGE-ID \"<00000000.0000000@example.org>\""))
                 .thenReturn(singletonList(createImapResponse("* SEARCH 23")));
 
@@ -1122,10 +1122,10 @@ public class ImapFolderTest {
 
     private Part createPlainTextPart(String serverExtra) {
         Part part = createPart(serverExtra);
-        when(part.getHeader(MimeHeader.HEADER_CONTENT_TRANSFER_ENCODING)).thenReturn(
+        when(part.getUnparsedHeader(MimeHeader.HEADER_CONTENT_TRANSFER_ENCODING)).thenReturn(
                 new String[] { MimeUtil.ENC_7BIT }
         );
-        when(part.getHeader(MimeHeader.HEADER_CONTENT_TYPE)).thenReturn(
+        when(part.getUnparsedHeader(MimeHeader.HEADER_CONTENT_TYPE)).thenReturn(
                 new String[] { "text/plain" }
         );
         return part;

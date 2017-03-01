@@ -2863,7 +2863,7 @@ public class MessagingController {
 
                     localFolder.fetch(Collections.singletonList(message), fp, null);
                     try {
-                        if (message.getHeader(K9.IDENTITY_HEADER).length > 0) {
+                        if (message.getUnparsedHeader(K9.IDENTITY_HEADER).length > 0) {
                             Log.v(K9.LOG_TAG, "The user has set the Outbox and Drafts folder to the same thing. " +
                                     "This message appears to be a draft, so K-9 will not send it");
                             continue;

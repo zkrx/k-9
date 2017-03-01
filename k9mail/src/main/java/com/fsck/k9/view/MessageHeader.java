@@ -406,7 +406,7 @@ public class MessageHeader extends LinearLayout implements OnClickListener, OnLo
 
         Set<String> headerNames = new LinkedHashSet<String>(message.getHeaderNames());
         for (String headerName : headerNames) {
-            String[] headerValues = message.getHeader(headerName);
+            String[] headerValues = message.getUnparsedHeader(headerName);
             for (String headerValue : headerValues) {
                 additionalHeaders.add(new HeaderEntry(headerName, headerValue));
             }

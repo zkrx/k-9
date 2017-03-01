@@ -137,7 +137,7 @@ public class AttachmentInfoExtractor {
         // attachments.
         if (contentDisposition != null &&
                 MimeUtility.getHeaderParameter(contentDisposition, null).matches("^(?i:inline)") &&
-                part.getHeader(MimeHeader.HEADER_CONTENT_ID).length > 0) {
+                part.getUnparsedHeader(MimeHeader.HEADER_CONTENT_ID).length > 0) {
             inlineAttachment = true;
         }
 

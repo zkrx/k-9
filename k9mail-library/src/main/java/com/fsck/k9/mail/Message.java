@@ -131,7 +131,7 @@ public abstract class Message implements Part, Body {
 
     @NonNull
     @Override
-    public abstract String[] getHeader(String name);
+    public abstract String[] getUnparsedHeader(String name);
 
     public abstract Set<String> getHeaderNames();
 

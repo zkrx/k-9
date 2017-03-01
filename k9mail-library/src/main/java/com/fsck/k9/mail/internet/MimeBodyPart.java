@@ -64,7 +64,7 @@ public class MimeBodyPart extends BodyPart {
 
     @NonNull
     @Override
-    public String[] getHeader(String name) {
+    public String[] getUnparsedHeader(String name) {
         return mHeader.getHeader(name);
     }
 

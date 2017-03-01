@@ -27,7 +27,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RuntimeEnvironment;
-import org.robolectric.annotation.Config;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -236,14 +235,14 @@ public class MessageTest {
     public void testSetSendDateFormatsHeaderCorrectlyWithCurrentTimeZone() throws Exception {
         Message message = sampleMessage();
         message.setSentDate(new Date(0), false);
-        assertEquals("Thu, 01 Jan 1970 09:00:00 +0900", message.getHeader("Date")[0]);
+        assertEquals("Thu, 01 Jan 1970 09:00:00 +0900", message.getUnparsedHeader("Date")[0]);
     }
 
     @Test
     public void testSetSendDateFormatsHeaderCorrectlyWithoutTimeZone() throws Exception {
         Message message = sampleMessage();
         message.setSentDate(new Date(0), true);
-        assertEquals("Thu, 01 Jan 1970 00:00:00 +0000", message.getHeader("Date")[0]);
+        assertEquals("Thu, 01 Jan 1970 00:00:00 +0000", message.getUnparsedHeader("Date")[0]);
     }
 
     @Test

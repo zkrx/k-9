@@ -894,7 +894,7 @@ public class MessagingControllerTest {
         when(transportProvider.getTransport(appContext, account)).thenReturn(transport);
         when(localFolder.getMessages(null)).thenReturn(Collections.singletonList(localMessageToSend1));
         when(localMessageToSend1.getUid()).thenReturn("localMessageToSend1");
-        when(localMessageToSend1.getHeader(K9.IDENTITY_HEADER)).thenReturn(new String[]{});
+        when(localMessageToSend1.getUnparsedHeader(K9.IDENTITY_HEADER)).thenReturn(new String[]{});
         controller.addListener(listener);
     }
 
