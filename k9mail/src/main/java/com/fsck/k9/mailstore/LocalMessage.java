@@ -5,6 +5,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Date;
+import java.util.List;
 
 import android.content.ContentValues;
 import android.database.Cursor;
@@ -63,21 +64,10 @@ public class LocalMessage extends MimeMessage {
         }
         this.setInternalSentDate(new Date(cursor.getLong(LocalStore.MSG_INDEX_DATE)));
         this.setUid(cursor.getString(LocalStore.MSG_INDEX_UID));
-        String flagList = cursor.getString(LocalStore.MSG_INDEX_FLAGS);
-        if (flagList != null && flagList.length() > 0) {
-            String[] flags = flagList.split(",");
-
-            for (String flag : flags) {
-                try {
-                    this.setFlagInternal(Flag.valueOf(flag), true);
-                }
-
-                catch (Exception e) {
-                    if (!"X_BAD_FLAG".equals(flag)) {
-                        Timber.w("Unable to parse flag %s", flag);
-                    }
-                }
-            }
+        final String flagList = cursor.getString(LocalStore.MSG_INDEX_FLAGS);
+        final List<Flag> flags = Flag.parseCodeList(flagList);
+        for (Flag flag : flags) {
+            this.setFlagInternal(flag, true);
         }
         this.databaseId = cursor.getLong(LocalStore.MSG_INDEX_ID);
         this.setRecipients(RecipientType.TO, Address.unpack(cursor.getString(LocalStore.MSG_INDEX_TO)));
