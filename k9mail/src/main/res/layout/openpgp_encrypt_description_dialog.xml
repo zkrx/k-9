@@ -43,7 +43,7 @@
         android:textAppearance="?android:textAppearanceSmall"
         android:layout_marginTop="10dp"
         android:layout_marginBottom="10dp"
-        android:text="Encrypting messages ensures they can be read by the recipient, and nobody else."
+        android:text="@string/openpgp_description_text1"
         />
 
     <LinearLayout
@@ -82,7 +82,7 @@
         android:layout_marginTop="10dp"
         android:layout_marginBottom="10dp"
         android:textAppearance="?android:textAppearanceSmall"
-        android:text="Toggle encryption by clicking this icon."
+        android:text="@string/openpgp_description_text2"
         />
 
     <TextView
@@ -91,7 +91,7 @@
         android:textAppearance="?android:textAppearanceSmall"
         android:layout_marginTop="10dp"
         android:layout_marginBottom="10dp"
-        android:text="Encryption will only show up if supported by all recipients, and they must have sent you an e-mail before."
+        android:text="@string/openpgp_description_text3"
         />
 
 </LinearLayout>
