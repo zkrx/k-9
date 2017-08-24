@@ -23,6 +23,7 @@ import com.fsck.k9.mail.Message.RecipientType;
 import com.fsck.k9.message.AutocryptStatusInteractor;
 import com.fsck.k9.message.AutocryptStatusInteractor.RecipientAutocryptStatus;
 import com.fsck.k9.message.AutocryptStatusInteractor.RecipientAutocryptStatusType;
+import com.fsck.k9.message.ComposePgpEnableByDefaultDecider;
 import com.fsck.k9.message.ComposePgpInlineDecider;
 import com.fsck.k9.view.RecipientSelectView.Recipient;
 import org.junit.Before;
@@ -61,6 +62,7 @@ public class RecipientPresenterTest {
     private RecipientPresenter recipientPresenter;
     private ReplyToParser replyToParser;
     private ComposePgpInlineDecider composePgpInlineDecider;
+    private ComposePgpEnableByDefaultDecider composePgpEnableByDefaultDecider;
     private Account account;
     private RecipientMvpView recipientMvpView;
     private RecipientPresenter.RecipientsChangedListener listener;
@@ -76,6 +78,7 @@ public class RecipientPresenterTest {
         recipientMvpView = mock(RecipientMvpView.class);
         account = mock(Account.class);
         composePgpInlineDecider = mock(ComposePgpInlineDecider.class);
+        composePgpEnableByDefaultDecider = mock(ComposePgpEnableByDefaultDecider.class);
         autocryptStatusInteractor = mock(AutocryptStatusInteractor.class);
         replyToParser = mock(ReplyToParser.class);
         LoaderManager loaderManager = mock(LoaderManager.class);
@@ -83,7 +86,7 @@ public class RecipientPresenterTest {
 
         recipientPresenter = new RecipientPresenter(
                 context, loaderManager, recipientMvpView, account, composePgpInlineDecider,
-                autocryptStatusInteractor, replyToParser, listener);
+                composePgpEnableByDefaultDecider, autocryptStatusInteractor, replyToParser, listener);
         runBackgroundTask();
 
         noRecipientsAutocryptResult = new RecipientAutocryptStatus(RecipientAutocryptStatusType.NO_RECIPIENTS, null);
