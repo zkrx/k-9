@@ -17,6 +17,7 @@ import com.fsck.k9.BuildConfig;
 import com.fsck.k9.activity.MessageReference;
 import com.fsck.k9.mail.Address;
 import com.fsck.k9.mail.Flag;
+import com.fsck.k9.mail.FlagManager;
 import com.fsck.k9.mail.Folder;
 import com.fsck.k9.mail.MessagingException;
 import com.fsck.k9.mail.internet.MimeMessage;
@@ -65,7 +66,8 @@ public class LocalMessage extends MimeMessage {
         this.setInternalSentDate(new Date(cursor.getLong(LocalStore.MSG_INDEX_DATE)));
         this.setUid(cursor.getString(LocalStore.MSG_INDEX_UID));
         final String flagList = cursor.getString(LocalStore.MSG_INDEX_FLAGS);
-        final List<Flag> flags = Flag.parseCodeList(flagList);
+        final List<Flag> flags =
+            FlagManager.getFlagManager().parseCodeList(flagList);
         for (Flag flag : flags) {
             this.setFlagInternal(flag, true);
         }
