@@ -23,25 +23,17 @@ public class ComposeCryptoStatus {
     private boolean allKeysAvailable;
     private boolean allKeysVerified;
     private boolean hasRecipients;
-    private Long signingKeyId;
-    private Long selfEncryptKeyId;
+    private Long openPgpKeyId;
     private String[] recipientAddresses;
     private boolean enablePgpInline;
 
-
-    public long[] getEncryptKeyIds() {
-        if (selfEncryptKeyId == null) {
-            return null;
-        }
-        return new long[] { selfEncryptKeyId };
-    }
 
     public String[] getRecipientAddresses() {
         return recipientAddresses;
     }
 
-    public Long getSigningKeyId() {
-        return signingKeyId;
+    public Long getOpenPgpKeyId() {
+        return openPgpKeyId;
     }
 
     CryptoStatusDisplayType getCryptoStatusDisplayType() {
@@ -125,7 +117,7 @@ public class ComposeCryptoStatus {
     }
 
     public boolean isSigningEnabled() {
-        return cryptoMode != CryptoMode.DISABLE && signingKeyId != null;
+        return cryptoMode != CryptoMode.DISABLE && openPgpKeyId != null;
     }
 
     public boolean isPgpInlineModeEnabled() {
@@ -144,8 +136,7 @@ public class ComposeCryptoStatus {
 
         private CryptoProviderState cryptoProviderState;
         private CryptoMode cryptoMode;
-        private Long signingKeyId;
-        private Long selfEncryptKeyId;
+        private Long openPgpKeyId;
         private List<Recipient> recipients;
         private Boolean enablePgpInline;
 
@@ -159,13 +150,8 @@ public class ComposeCryptoStatus {
             return this;
         }
 
-        public ComposeCryptoStatusBuilder setSigningKeyId(long signingKeyId) {
-            this.signingKeyId = signingKeyId;
-            return this;
-        }
-
-        public ComposeCryptoStatusBuilder setSelfEncryptId(long selfEncryptKeyId) {
-            this.selfEncryptKeyId = selfEncryptKeyId;
+        public ComposeCryptoStatusBuilder setOpenPgpKeyId(Long openPgpKeyId) {
+            this.openPgpKeyId = openPgpKeyId;
             return this;
         }
 
@@ -216,8 +202,7 @@ public class ComposeCryptoStatus {
             result.allKeysAvailable = allKeysAvailable;
             result.allKeysVerified = allKeysVerified;
             result.hasRecipients = hasRecipients;
-            result.signingKeyId = signingKeyId;
-            result.selfEncryptKeyId = selfEncryptKeyId;
+            result.openPgpKeyId = openPgpKeyId;
             result.enablePgpInline = enablePgpInline;
             return result;
         }
@@ -232,7 +217,7 @@ public class ComposeCryptoStatus {
             // TODO: be more specific about this error
             return SendErrorState.PROVIDER_ERROR;
         }
-        boolean isSignKeyMissing = signingKeyId == null;
+        boolean isSignKeyMissing = openPgpKeyId == null;
         if (isSignKeyMissing) {
             return SendErrorState.SIGN_KEY_NOT_CONFIGURED;
         }

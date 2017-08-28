@@ -366,9 +366,7 @@ public class RecipientPresenter implements PermissionPingCallback {
 
             long accountCryptoKey = account.getCryptoKey();
             if (accountCryptoKey != Account.NO_OPENPGP_KEY) {
-                // TODO split these into individual settings? maybe after key is bound to identity
-                builder.setSigningKeyId(accountCryptoKey);
-                builder.setSelfEncryptId(accountCryptoKey);
+                builder.setOpenPgpKeyId(accountCryptoKey);
             }
 
             cachedCryptoStatus = builder.build();

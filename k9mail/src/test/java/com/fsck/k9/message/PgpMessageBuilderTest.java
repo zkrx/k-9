@@ -62,8 +62,7 @@ import static org.mockito.Mockito.when;
 
 @RunWith(K9RobolectricTestRunner.class)
 public class PgpMessageBuilderTest {
-    private static final long TEST_SIGN_KEY_ID = 123L;
-    private static final long TEST_SELF_ENCRYPT_KEY_ID = 234L;
+    private static final long TEST_KEY_ID = 123L;
     private static final String TEST_MESSAGE_TEXT = "message text with a ☭ CCCP symbol";
 
 
@@ -133,7 +132,7 @@ public class PgpMessageBuilderTest {
         pgpMessageBuilder.buildAsync(mockCallback);
 
         Intent expectedIntent = new Intent(OpenPgpApi.ACTION_DETACHED_SIGN);
-        expectedIntent.putExtra(OpenPgpApi.EXTRA_SIGN_KEY_ID, TEST_SIGN_KEY_ID);
+        expectedIntent.putExtra(OpenPgpApi.EXTRA_SIGN_KEY_ID, TEST_KEY_ID);
         expectedIntent.putExtra(OpenPgpApi.EXTRA_REQUEST_ASCII_ARMOR, true);
         assertIntentEqualsActionAndExtras(expectedIntent, capturedApiIntent.getValue());
 
@@ -274,8 +273,8 @@ public class PgpMessageBuilderTest {
         pgpMessageBuilder.buildAsync(mockCallback);
 
         Intent expectedApiIntent = new Intent(OpenPgpApi.ACTION_SIGN_AND_ENCRYPT);
-        expectedApiIntent.putExtra(OpenPgpApi.EXTRA_SIGN_KEY_ID, TEST_SIGN_KEY_ID);
-        expectedApiIntent.putExtra(OpenPgpApi.EXTRA_KEY_IDS, new long[] { TEST_SELF_ENCRYPT_KEY_ID });
+        expectedApiIntent.putExtra(OpenPgpApi.EXTRA_SIGN_KEY_ID, TEST_KEY_ID);
+        expectedApiIntent.putExtra(OpenPgpApi.EXTRA_KEY_IDS, new long[] { TEST_KEY_ID });
         expectedApiIntent.putExtra(OpenPgpApi.EXTRA_REQUEST_ASCII_ARMOR, true);
         expectedApiIntent.putExtra(OpenPgpApi.EXTRA_OPPORTUNISTIC_ENCRYPTION, false);
         expectedApiIntent.putExtra(OpenPgpApi.EXTRA_USER_IDS, cryptoStatus.getRecipientAddresses());
@@ -327,8 +326,8 @@ public class PgpMessageBuilderTest {
         pgpMessageBuilder.buildAsync(mockCallback);
 
         Intent expectedApiIntent = new Intent(OpenPgpApi.ACTION_SIGN_AND_ENCRYPT);
-        expectedApiIntent.putExtra(OpenPgpApi.EXTRA_SIGN_KEY_ID, TEST_SIGN_KEY_ID);
-        expectedApiIntent.putExtra(OpenPgpApi.EXTRA_KEY_IDS, new long[] { TEST_SELF_ENCRYPT_KEY_ID });
+        expectedApiIntent.putExtra(OpenPgpApi.EXTRA_SIGN_KEY_ID, TEST_KEY_ID);
+        expectedApiIntent.putExtra(OpenPgpApi.EXTRA_KEY_IDS, new long[] { TEST_KEY_ID });
         expectedApiIntent.putExtra(OpenPgpApi.EXTRA_REQUEST_ASCII_ARMOR, true);
         expectedApiIntent.putExtra(OpenPgpApi.EXTRA_OPPORTUNISTIC_ENCRYPTION, false);
         expectedApiIntent.putExtra(OpenPgpApi.EXTRA_USER_IDS, cryptoStatus.getRecipientAddresses());
@@ -365,7 +364,7 @@ public class PgpMessageBuilderTest {
         pgpMessageBuilder.buildAsync(mockCallback);
 
         Intent expectedApiIntent = new Intent(OpenPgpApi.ACTION_SIGN);
-        expectedApiIntent.putExtra(OpenPgpApi.EXTRA_SIGN_KEY_ID, TEST_SIGN_KEY_ID);
+        expectedApiIntent.putExtra(OpenPgpApi.EXTRA_SIGN_KEY_ID, TEST_KEY_ID);
         expectedApiIntent.putExtra(OpenPgpApi.EXTRA_REQUEST_ASCII_ARMOR, true);
         assertIntentEqualsActionAndExtras(expectedApiIntent, capturedApiIntent.getValue());
 
@@ -466,8 +465,7 @@ public class PgpMessageBuilderTest {
     private ComposeCryptoStatusBuilder createDefaultComposeCryptoStatusBuilder() {
         return new ComposeCryptoStatusBuilder()
                 .setEnablePgpInline(false)
-                .setSigningKeyId(TEST_SIGN_KEY_ID)
-                .setSelfEncryptId(TEST_SELF_ENCRYPT_KEY_ID)
+                .setOpenPgpKeyId(TEST_KEY_ID)
                 .setRecipients(new ArrayList<Recipient>())
                 .setCryptoProviderState(CryptoProviderState.OK);
     }
@@ -554,11 +552,11 @@ public class PgpMessageBuilderTest {
             }
             if (intentExtra instanceof long[]) {
                 if (!Arrays.equals((long[]) intentExtra, (long[]) expectedExtra)) {
-                    Assert.assertArrayEquals((long[]) expectedExtra, (long[]) intentExtra);
+                    Assert.assertArrayEquals("error in " + key, (long[]) expectedExtra, (long[]) intentExtra);
                 }
             } else {
                 if (!intentExtra.equals(expectedExtra)) {
-                    Assert.assertEquals(expectedExtra, intentExtra);
+                    Assert.assertEquals("error in " + key, expectedExtra, intentExtra);
                 }
             }
         }
