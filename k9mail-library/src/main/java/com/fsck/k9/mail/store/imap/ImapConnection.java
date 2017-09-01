@@ -624,10 +624,9 @@ class ImapConnection {
 
         NamespaceResponse namespaceResponse = NamespaceResponse.parse(responses);
         if (namespaceResponse != null) {
-            String prefix = namespaceResponse.getPrefix();
-            String hierarchyDelimiter = namespaceResponse.getHierarchyDelimiter();
+            String prefix = namespaceResponse.getPersonalNamespaces().get(0).getPrefix();
+            String hierarchyDelimiter = namespaceResponse.getPersonalNamespaces().get(0).getHierarchyDelimiter();
 
-            settings.setPathPrefix(prefix);
             settings.setPathDelimiter(hierarchyDelimiter);
             settings.setCombinedPrefix(null);
 
