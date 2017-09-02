@@ -62,11 +62,11 @@ class NamespaceResponse {
     }
 
     private static ArrayList<Namespace> parseNamespaces(ImapResponse response, int key) {
-        ArrayList<Namespace> namespaces = parseNamespaces(response, 1);
+        ArrayList<Namespace> namespaces = new ArrayList<>();
         if (response.isList(key)) {
             ImapList namespacesImap = response.getList(key);
             for (int i = 0; i < namespacesImap.size(); i++) {
-                if (!namespacesImap.isList(i)) {
+                if (namespacesImap.isList(i)) {
                     ImapList namespace = namespacesImap.getList(i);
                     namespaces.add(new Namespace(namespace.getString(0), namespace.getString(1)));
                 }
