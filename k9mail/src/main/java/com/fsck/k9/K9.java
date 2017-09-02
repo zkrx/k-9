@@ -1447,6 +1447,7 @@ public class K9 extends Application {
         if (enableDebugLogging) {
             Timber.plant(new DebugTree());
         }
+        Timber.plant(new FileLoggingTree(enableDebugLogging));
     }
 
     public static void saveSettingsAsync() {

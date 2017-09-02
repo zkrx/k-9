@@ -36,6 +36,9 @@ dependencies {
     compile 'com.squareup.moshi:moshi:1.2.0'
     compile "com.jakewharton.timber:timber:${timberVersion}"
     compile 'net.jcip:jcip-annotations:1.0'
+    compile 'org.slf4j:slf4j-api:1.7.21'
+    compile 'com.github.tony19:logback-android-core:1.1.1-6'
+    compile 'com.github.tony19:logback-android-classic:1.1.1-6'
 
     androidTestCompile 'com.android.support.test.espresso:espresso-core:2.2.2'
 
