@@ -406,8 +406,9 @@ public class Accounts extends K9ListActivity implements OnItemClickListener {
 
         boolean startup = intent.getBooleanExtra(EXTRA_STARTUP, true);
         if (startup && K9.startIntegratedInbox() && !K9.isHideSpecialAccounts()) {
-            onOpenAccount(mUnifiedInboxAccount);
-            finish();
+            if (onOpenAccount(mUnifiedInboxAccount)) {
+                finish();
+            }
             return;
         } else if (startup && accounts.size() == 1 && onOpenAccount(accounts.get(0))) {
             finish();
@@ -1237,7 +1238,9 @@ public class Accounts extends K9ListActivity implements OnItemClickListener {
 
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         BaseAccount account = (BaseAccount)parent.getItemAtPosition(position);
-        onOpenAccount(account);
+        if (onOpenAccount(account)) {
+            finish();
+        }
     }
 
     @Override
@@ -1839,14 +1842,15 @@ public class Accounts extends K9ListActivity implements OnItemClickListener {
 
             if (account instanceof SearchAccount) {
                 holder.folders.setVisibility(View.GONE);
-            } else {
+            } else if (account instanceof Account) {
                 holder.folders.setVisibility(View.VISIBLE);
                 holder.folders.setOnClickListener(new OnClickListener() {
                     public void onClick(View v) {
                         FolderList.actionHandleAccount(Accounts.this, (Account)account);
-
                     }
                 });
+            } else {
+                Timber.e("Unhandled account type:" + account.getClass().getName());
             }
 
             return view;
