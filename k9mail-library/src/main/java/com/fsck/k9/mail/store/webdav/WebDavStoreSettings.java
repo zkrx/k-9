@@ -11,7 +11,7 @@ import java.util.Map;
 /**
  * This class is used to store the decoded contents of an WebDavStore URI.
  *
- * @see WebDavStore#decodeUri(String)
+ * @see WebDavMailStore#decodeUri(String)
  */
 public class WebDavStoreSettings extends ServerSettings {
     public static final String ALIAS_KEY = "alias";

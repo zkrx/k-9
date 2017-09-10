@@ -23,7 +23,7 @@ public class WebDavMessageTest {
     @Mock
     private WebDavFolder mockFolder;
     @Mock
-    private WebDavStore mockStore;
+    private WebDavMailStore mockStore;
     @Mock
     private WebDavFolder mockTrashFolder;
 

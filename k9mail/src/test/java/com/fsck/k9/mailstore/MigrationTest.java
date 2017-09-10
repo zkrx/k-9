@@ -155,7 +155,7 @@ public class MigrationTest {
         insertSimplePlaintextMessage(db);
         db.close();
 
-        LocalStore localStore = LocalStore.getInstance(account, RuntimeEnvironment.application);
+        LocalMailStore localStore = LocalMailStore.getInstance(account, RuntimeEnvironment.application);
 
         LocalMessage msg = localStore.getFolder("dev").getMessage("3");
         FetchProfile fp = new FetchProfile();
@@ -222,7 +222,7 @@ public class MigrationTest {
         insertMixedWithAttachments(db);
         db.close();
 
-        LocalStore localStore = LocalStore.getInstance(account, RuntimeEnvironment.application);
+        LocalMailStore localStore = LocalMailStore.getInstance(account, RuntimeEnvironment.application);
 
         LocalMessage msg = localStore.getFolder("dev").getMessage("4");
         FetchProfile fp = new FetchProfile();
@@ -294,7 +294,7 @@ public class MigrationTest {
         insertPgpMimeSignedMessage(db);
         db.close();
 
-        LocalStore localStore = LocalStore.getInstance(account, RuntimeEnvironment.application);
+        LocalMailStore localStore = LocalMailStore.getInstance(account, RuntimeEnvironment.application);
 
         LocalMessage msg = localStore.getFolder("dev").getMessage("5");
         FetchProfile fp = new FetchProfile();
@@ -353,7 +353,7 @@ public class MigrationTest {
         insertPgpMimeEncryptedMessage(db);
         db.close();
 
-        LocalStore localStore = LocalStore.getInstance(account, RuntimeEnvironment.application);
+        LocalMailStore localStore = LocalMailStore.getInstance(account, RuntimeEnvironment.application);
 
         LocalMessage msg = localStore.getFolder("dev").getMessage("6");
         FetchProfile fp = new FetchProfile();
@@ -471,7 +471,7 @@ public class MigrationTest {
         insertPgpInlineEncryptedMessage(db);
         db.close();
 
-        LocalStore localStore = LocalStore.getInstance(account, RuntimeEnvironment.application);
+        LocalMailStore localStore = LocalMailStore.getInstance(account, RuntimeEnvironment.application);
 
         LocalMessage msg = localStore.getFolder("dev").getMessage("7");
         FetchProfile fp = new FetchProfile();
@@ -558,7 +558,7 @@ public class MigrationTest {
         insertPgpInlineClearsignedMessage(db);
         db.close();
 
-        LocalStore localStore = LocalStore.getInstance(account, RuntimeEnvironment.application);
+        LocalMailStore localStore = LocalMailStore.getInstance(account, RuntimeEnvironment.application);
 
         LocalMessage msg = localStore.getFolder("dev").getMessage("8");
         FetchProfile fp = new FetchProfile();
@@ -616,7 +616,7 @@ public class MigrationTest {
         insertMultipartAlternativeMessage(db);
         db.close();
 
-        LocalStore localStore = LocalStore.getInstance(account, RuntimeEnvironment.application);
+        LocalMailStore localStore = LocalMailStore.getInstance(account, RuntimeEnvironment.application);
 
         LocalMessage msg = localStore.getFolder("dev").getMessage("9");
         FetchProfile fp = new FetchProfile();
@@ -681,7 +681,7 @@ public class MigrationTest {
         insertHtmlWithRelatedMessage(db);
         db.close();
 
-        LocalStore localStore = LocalStore.getInstance(account, RuntimeEnvironment.application);
+        LocalMailStore localStore = LocalMailStore.getInstance(account, RuntimeEnvironment.application);
 
         LocalMessage msg = localStore.getFolder("dev").getMessage("10");
         FetchProfile fp = new FetchProfile();

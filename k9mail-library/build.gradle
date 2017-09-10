@@ -14,6 +14,7 @@ repositories {
 }
 
 dependencies {
+    compile project(':plugins:managesievej')
     compile 'org.apache.james:apache-mime4j-core:0.7.2'
     compile 'org.apache.james:apache-mime4j-dom:0.7.2'
     compile 'commons-io:commons-io:2.4'

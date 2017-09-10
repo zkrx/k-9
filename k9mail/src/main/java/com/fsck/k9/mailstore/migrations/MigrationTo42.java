@@ -7,7 +7,7 @@ import android.os.SystemClock;
 
 import com.fsck.k9.mail.Folder;
 import com.fsck.k9.mailstore.LocalFolder;
-import com.fsck.k9.mailstore.LocalStore;
+import com.fsck.k9.mailstore.LocalMailStore;
 import com.fsck.k9.preferences.Storage;
 import com.fsck.k9.preferences.StorageEditor;
 import timber.log.Timber;
@@ -16,7 +16,7 @@ import timber.log.Timber;
 class MigrationTo42 {
     public static void from41MoveFolderPreferences(MigrationsHelper migrationsHelper) {
         try {
-            LocalStore localStore = migrationsHelper.getLocalStore();
+            LocalMailStore localStore = migrationsHelper.getLocalStore();
             Storage storage = migrationsHelper.getStorage();
 
             long startTime = SystemClock.elapsedRealtime();

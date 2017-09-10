@@ -15,9 +15,9 @@ import com.fsck.k9.mail.Folder;
 import com.fsck.k9.mail.Folder.FolderClass;
 
 import com.fsck.k9.mail.MessagingException;
-import com.fsck.k9.mail.Store;
+import com.fsck.k9.mail.MailStore;
 import com.fsck.k9.mailstore.LocalFolder;
-import com.fsck.k9.mailstore.LocalStore;
+import com.fsck.k9.mailstore.LocalMailStore;
 import com.fsck.k9.service.MailService;
 
 public class FolderSettings extends K9PreferenceActivity {
@@ -58,7 +58,7 @@ public class FolderSettings extends K9PreferenceActivity {
         Account mAccount = Preferences.getPreferences(this).getAccount(accountUuid);
 
         try {
-            LocalStore localStore = mAccount.getLocalStore();
+            LocalMailStore localStore = mAccount.getLocalStore();
             mFolder = localStore.getFolder(folderName);
             mFolder.open(Folder.OPEN_MODE_RW);
         } catch (MessagingException me) {
@@ -68,8 +68,8 @@ public class FolderSettings extends K9PreferenceActivity {
 
         boolean isPushCapable = false;
         try {
-            Store store = mAccount.getRemoteStore();
-            isPushCapable = store.isPushCapable();
+            MailStore mailStore = mAccount.getRemoteStore();
+            isPushCapable = mailStore.isPushCapable();
         } catch (Exception e) {
             Timber.e(e, "Could not get remote store");
         }

@@ -39,7 +39,7 @@ import static org.mockito.Mockito.when;
 
 @RunWith(K9RobolectricTestRunner.class)
 @Config(manifest = Config.NONE)
-public class StoreSchemaDefinitionTest {
+public class MailStoreSchemaDefinitionTest {
     private StoreSchemaDefinition storeSchemaDefinition;
 
 
@@ -59,7 +59,7 @@ public class StoreSchemaDefinitionTest {
     public void getVersion_shouldReturnCurrentDatabaseVersion() {
         int version = storeSchemaDefinition.getVersion();
 
-        assertEquals(LocalStore.DB_VERSION, version);
+        assertEquals(LocalMailStore.DB_VERSION, version);
     }
 
     @Test
@@ -68,7 +68,7 @@ public class StoreSchemaDefinitionTest {
 
         storeSchemaDefinition.doDbUpgrade(database);
 
-        assertEquals(LocalStore.DB_VERSION, database.getVersion());
+        assertEquals(LocalMailStore.DB_VERSION, database.getVersion());
     }
 
     @Test
@@ -92,7 +92,7 @@ public class StoreSchemaDefinitionTest {
 
         storeSchemaDefinition.doDbUpgrade(database);
 
-        assertEquals(LocalStore.DB_VERSION, database.getVersion());
+        assertEquals(LocalMailStore.DB_VERSION, database.getVersion());
     }
 
     @Test
@@ -335,7 +335,7 @@ public class StoreSchemaDefinitionTest {
         Account account = createAccount();
         LockableDatabase lockableDatabase = createLockableDatabase();
 
-        LocalStore localStore = mock(LocalStore.class);
+        LocalMailStore localStore = mock(LocalMailStore.class);
         when(localStore.getDatabase()).thenReturn(lockableDatabase);
         when(localStore.getContext()).thenReturn(context);
         when(localStore.getAccount()).thenReturn(account);

@@ -26,7 +26,7 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 
-public class Pop3StoreTest {
+public class Pop3MailStoreTest {
     private static final String INITIAL_RESPONSE = "+OK POP3 server greeting\r\n";
     private static final String AUTH = "AUTH\r\n";
     private static final String AUTH_HANDLE_RESPONSE = "+OK Listing of supported mechanisms follows\r\n" +
@@ -48,7 +48,7 @@ public class Pop3StoreTest {
     private static final String STAT_RESPONSE = "+OK 20 0\r\n";
 
 
-    private Pop3Store store;
+    private Pop3MailStore store;
     private StoreConfig mockStoreConfig = mock(StoreConfig.class);
     private TrustedSocketFactory mockTrustedSocketFactory = mock(TrustedSocketFactory.class);
     private Socket mockSocket = mock(Socket.class);
@@ -65,7 +65,7 @@ public class Pop3StoreTest {
         when(mockSocket.isClosed()).thenReturn(false);
 
         when(mockSocket.getOutputStream()).thenReturn(mockOutputStream);
-        store = new Pop3Store(mockStoreConfig, mockTrustedSocketFactory);
+        store = new Pop3MailStore(mockStoreConfig, mockTrustedSocketFactory);
     }
 
     @Test

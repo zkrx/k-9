@@ -10,10 +10,11 @@ import java.util.List;
 import java.util.Map;
 
 import android.content.Context;
+
+import com.fsck.k9.mailstore.LocalMailStore;
 import timber.log.Timber;
 
-import com.fsck.k9.mail.store.RemoteStore;
-import com.fsck.k9.mailstore.LocalStore;
+import com.fsck.k9.mail.store.RemoteMailStore;
 import com.fsck.k9.preferences.StorageEditor;
 import com.fsck.k9.preferences.Storage;
 
@@ -126,11 +127,11 @@ public class Preferences {
         }
 
         try {
-            RemoteStore.removeInstance(account);
+            RemoteMailStore.removeInstance(account);
         } catch (Exception e) {
             Timber.e(e, "Failed to reset remote store for account %s", account.getUuid());
         }
-        LocalStore.removeAccount(account);
+        LocalMailStore.removeAccount(account);
 
         account.delete(this);
 

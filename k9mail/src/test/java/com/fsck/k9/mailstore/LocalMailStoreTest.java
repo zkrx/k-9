@@ -3,20 +3,19 @@ package com.fsck.k9.mailstore;
 
 import com.fsck.k9.mail.Part;
 import com.fsck.k9.mail.internet.MimeBodyPart;
-import com.fsck.k9.mail.internet.MimeMessage;
 import com.fsck.k9.mail.internet.MimeMultipart;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
 
 
-public class LocalStoreTest {
+public class LocalMailStoreTest {
 
     @Test
     public void findPartById__withRootLocalBodyPart() throws Exception {
         LocalBodyPart searchRoot = new LocalBodyPart(null, null, 123L, -1L);
 
-        Part part = LocalStore.findPartById(searchRoot, 123L);
+        Part part = LocalMailStore.findPartById(searchRoot, 123L);
 
         assertSame(searchRoot, part);
     }
@@ -26,7 +25,7 @@ public class LocalStoreTest {
         LocalMessage searchRoot = new LocalMessage(null, "uid", null);
         searchRoot.setMessagePartId(123L);
 
-        Part part = LocalStore.findPartById(searchRoot, 123L);
+        Part part = LocalMailStore.findPartById(searchRoot, 123L);
 
         assertSame(searchRoot, part);
     }
@@ -41,7 +40,7 @@ public class LocalStoreTest {
         searchRoot.setBody(mimeMultipart);
 
 
-        Part part = LocalStore.findPartById(searchRoot, 123L);
+        Part part = LocalMailStore.findPartById(searchRoot, 123L);
 
 
         assertSame(needlePart, part);
@@ -57,7 +56,7 @@ public class LocalStoreTest {
         searchRoot.setBody(mimeMultipart);
 
 
-        Part part = LocalStore.findPartById(searchRoot, 123L);
+        Part part = LocalMailStore.findPartById(searchRoot, 123L);
 
 
         assertSame(needlePart, part);
@@ -75,7 +74,7 @@ public class LocalStoreTest {
         searchRoot.setBody(mimeMultipart);
 
 
-        Part part = LocalStore.findPartById(searchRoot, 123L);
+        Part part = LocalMailStore.findPartById(searchRoot, 123L);
 
 
         assertSame(needlePart, part);

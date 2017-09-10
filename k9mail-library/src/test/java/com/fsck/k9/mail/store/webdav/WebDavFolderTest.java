@@ -63,7 +63,7 @@ public class WebDavFolderTest {
     @Mock
     private MessageRetrievalListener<WebDavMessage> listener;
     @Mock
-    private WebDavStore mockStore;
+    private WebDavMailStore mockStore;
     @Mock
     private DataSet mockDataSet;
     @Mock

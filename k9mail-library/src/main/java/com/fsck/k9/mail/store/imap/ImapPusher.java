@@ -11,7 +11,7 @@ import timber.log.Timber;
 
 
 class ImapPusher implements Pusher {
-    private final ImapStore store;
+    private final ImapMailStore store;
     private final PushReceiver pushReceiver;
 
     private final List<ImapFolderPusher> folderPushers = new ArrayList<>();
@@ -19,7 +19,7 @@ class ImapPusher implements Pusher {
     private long lastRefresh = -1;
 
 
-    public ImapPusher(ImapStore store, PushReceiver pushReceiver) {
+    public ImapPusher(ImapMailStore store, PushReceiver pushReceiver) {
         this.store = store;
         this.pushReceiver = pushReceiver;
     }

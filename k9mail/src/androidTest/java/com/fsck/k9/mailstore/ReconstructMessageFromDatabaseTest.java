@@ -135,7 +135,7 @@ public class ReconstructMessageFromDatabaseTest extends ApplicationTestCase<K9> 
     }
 
     protected LocalFolder createFolderInDatabase() throws MessagingException {
-        LocalStore localStore = LocalStore.getInstance(account, getApplication());
+        LocalMailStore localStore = LocalMailStore.getInstance(account, getApplication());
         LocalFolder inbox = localStore.getFolder("INBOX");
         localStore.createFolders(Collections.singletonList(inbox), 10);
         return inbox;

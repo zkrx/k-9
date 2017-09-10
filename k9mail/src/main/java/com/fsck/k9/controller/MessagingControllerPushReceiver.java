@@ -1,6 +1,8 @@
 package com.fsck.k9.controller;
 
 import android.content.Context;
+
+import com.fsck.k9.mailstore.LocalMailStore;
 import timber.log.Timber;
 
 import com.fsck.k9.Account;
@@ -11,7 +13,6 @@ import com.fsck.k9.mail.Folder;
 import com.fsck.k9.mail.Message;
 import com.fsck.k9.mail.PushReceiver;
 import com.fsck.k9.mailstore.LocalFolder;
-import com.fsck.k9.mailstore.LocalStore;
 import com.fsck.k9.service.SleepService;
 
 import java.util.List;
@@ -90,7 +91,7 @@ public class MessagingControllerPushReceiver implements PushReceiver {
     public String getPushState(String folderName) {
         LocalFolder localFolder = null;
         try {
-            LocalStore localStore = account.getLocalStore();
+            LocalMailStore localStore = account.getLocalStore();
             localFolder = localStore.getFolder(folderName);
             localFolder.open(Folder.OPEN_MODE_RW);
             return localFolder.getPushState();

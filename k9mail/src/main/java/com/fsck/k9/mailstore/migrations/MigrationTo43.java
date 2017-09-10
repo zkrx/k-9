@@ -5,17 +5,15 @@ import java.util.List;
 
 import android.content.ContentValues;
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteDatabase;
+
+import com.fsck.k9.mailstore.LocalMailStore;
 import timber.log.Timber;
 
 import com.fsck.k9.Account;
-import com.fsck.k9.K9;
 import com.fsck.k9.R;
-import com.fsck.k9.mail.Folder;
 import com.fsck.k9.mail.Message;
 import com.fsck.k9.mailstore.LocalFolder;
-import com.fsck.k9.mailstore.LocalStore;
 
 import static com.fsck.k9.Account.OUTBOX;
 
@@ -23,7 +21,7 @@ import static com.fsck.k9.Account.OUTBOX;
 class MigrationTo43 {
     public static void fixOutboxFolders(SQLiteDatabase db, MigrationsHelper migrationsHelper) {
         try {
-            LocalStore localStore = migrationsHelper.getLocalStore();
+            LocalMailStore localStore = migrationsHelper.getLocalStore();
             Account account = migrationsHelper.getAccount();
             Context context = migrationsHelper.getContext();
 

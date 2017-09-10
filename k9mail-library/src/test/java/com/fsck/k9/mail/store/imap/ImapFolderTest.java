@@ -60,14 +60,14 @@ import static org.mockito.internal.util.collections.Sets.newSet;
 
 @RunWith(K9LibRobolectricTestRunner.class)
 public class ImapFolderTest {
-    private ImapStore imapStore;
+    private ImapMailStore imapStore;
     private ImapConnection imapConnection;
     private StoreConfig storeConfig;
 
     @Before
     public void setUp() throws Exception {
         BinaryTempFileBody.setTempDirectory(RuntimeEnvironment.application.getCacheDir());
-        imapStore = mock(ImapStore.class);
+        imapStore = mock(ImapMailStore.class);
         storeConfig = mock(StoreConfig.class);
         when(storeConfig.getInboxFolderName()).thenReturn("INBOX");
         when(imapStore.getCombinedPrefix()).thenReturn("");

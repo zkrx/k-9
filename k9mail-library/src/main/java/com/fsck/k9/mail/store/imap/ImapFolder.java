@@ -53,7 +53,7 @@ class ImapFolder extends Folder<ImapMessage> {
     protected volatile int messageCount = -1;
     protected volatile long uidNext = -1L;
     protected volatile ImapConnection connection;
-    protected ImapStore store = null;
+    protected ImapMailStore store = null;
     protected Map<Long, String> msgSeqUidMap = new ConcurrentHashMap<Long, String>();
     private final FolderNameCodec folderNameCodec;
     private final String name;
@@ -63,11 +63,11 @@ class ImapFolder extends Folder<ImapMessage> {
     private boolean canCreateKeywords = false;
 
 
-    public ImapFolder(ImapStore store, String name) {
+    public ImapFolder(ImapMailStore store, String name) {
         this(store, name, store.getFolderNameCodec());
     }
 
-    ImapFolder(ImapStore store, String name, FolderNameCodec folderNameCodec) {
+    ImapFolder(ImapMailStore store, String name, FolderNameCodec folderNameCodec) {
         super();
         this.store = store;
         this.name = name;
@@ -1380,7 +1380,7 @@ class ImapFolder extends Folder<ImapMessage> {
         return getName().hashCode();
     }
 
-    private ImapStore getStore() {
+    private ImapMailStore getStore() {
         return store;
     }
 

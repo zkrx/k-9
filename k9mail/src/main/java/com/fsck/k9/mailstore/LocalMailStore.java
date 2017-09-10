@@ -46,7 +46,7 @@ import com.fsck.k9.mail.MessageRetrievalListener;
 import com.fsck.k9.mail.MessagingException;
 import com.fsck.k9.mail.Multipart;
 import com.fsck.k9.mail.Part;
-import com.fsck.k9.mail.Store;
+import com.fsck.k9.mail.MailStore;
 import com.fsck.k9.mailstore.LocalFolder.DataLocation;
 import com.fsck.k9.mailstore.LocalFolder.MoreMessages;
 import com.fsck.k9.mailstore.LockableDatabase.DbCallback;
@@ -74,7 +74,7 @@ import org.openintents.openpgp.util.OpenPgpApi.OpenPgpDataSource;
  * Implements a SQLite database backed local store for Messages.
  * </pre>
  */
-public class LocalStore extends Store {
+public class LocalMailStore extends MailStore {
     static final String[] EMPTY_STRING_ARRAY = new String[0];
     static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
 
@@ -88,7 +88,7 @@ public class LocalStore extends Store {
     /**
      * Local stores indexed by UUID because the Uri may change due to migration to/from SD-card.
      */
-    private static ConcurrentMap<String, LocalStore> sLocalStores = new ConcurrentHashMap<>();
+    private static ConcurrentMap<String, LocalMailStore> sLocalStores = new ConcurrentHashMap<>();
 
     /*
      * a String containing the columns getMessages expects to work with
@@ -192,10 +192,10 @@ public class LocalStore extends Store {
 
     /**
      * local://localhost/path/to/database/uuid.db
-     * This constructor is only used by {@link LocalStore#getInstance(Account, Context)}
+     * This constructor is only used by {@link LocalMailStore#getInstance(Account, Context)}
      * @throws UnavailableStorageException if not {@link StorageProvider#isReady(Context)}
      */
-    private LocalStore(final Account account, final Context context) throws MessagingException {
+    private LocalMailStore(final Account account, final Context context) throws MessagingException {
         this.context = context;
         this.contentResolver = context.getContentResolver();
 
@@ -218,7 +218,7 @@ public class LocalStore extends Store {
      * @throws UnavailableStorageException
      *          if not {@link StorageProvider#isReady(Context)}
      */
-    public static LocalStore getInstance(Account account, Context context)
+    public static LocalMailStore getInstance(Account account, Context context)
             throws MessagingException {
 
         String accountUuid = account.getUuid();
@@ -229,12 +229,12 @@ public class LocalStore extends Store {
         // Use per-account locks so DatabaseUpgradeService always knows which account database is
         // currently upgraded.
         synchronized (sAccountLocks.get(accountUuid)) {
-            LocalStore store = sLocalStores.get(accountUuid);
+            LocalMailStore store = sLocalStores.get(accountUuid);
 
             if (store == null) {
                 // Creating a LocalStore instance will create or upgrade the database if
                 // necessary. This could take some time.
-                store = new LocalStore(account, context);
+                store = new LocalMailStore(account, context);
 
                 sLocalStores.put(accountUuid, store);
             }
@@ -411,7 +411,7 @@ public class LocalStore extends Store {
                                 continue;
                             }
                             String folderName = cursor.getString(FOLDER_NAME_INDEX);
-                            LocalFolder folder = new LocalFolder(LocalStore.this, folderName);
+                            LocalFolder folder = new LocalFolder(LocalMailStore.this, folderName);
                             folder.open(cursor);
 
                             folders.add(folder);
@@ -607,7 +607,7 @@ public class LocalStore extends Store {
                     cursor = db.rawQuery(queryString + " LIMIT 10", placeHolders);
 
                     while (cursor.moveToNext()) {
-                        LocalMessage message = new LocalMessage(LocalStore.this, null, folder);
+                        LocalMessage message = new LocalMessage(LocalMailStore.this, null, folder);
                         message.populateFromGetMessageCursor(cursor);
 
                         messages.add(message);
@@ -620,7 +620,7 @@ public class LocalStore extends Store {
                     cursor = db.rawQuery(queryString + " LIMIT -1 OFFSET 10", placeHolders);
 
                     while (cursor.moveToNext()) {
-                        LocalMessage message = new LocalMessage(LocalStore.this, null, folder);
+                        LocalMessage message = new LocalMessage(LocalMailStore.this, null, folder);
                         message.populateFromGetMessageCursor(cursor);
 
                         messages.add(message);
@@ -1063,7 +1063,7 @@ public class LocalStore extends Store {
     }
 
     /**
-     * Defines the behavior of {@link LocalStore#doBatchSetSelection(BatchSetSelection, int)}.
+     * Defines the behavior of {@link LocalMailStore#doBatchSetSelection(BatchSetSelection, int)}.
      */
     interface BatchSetSelection {
         /**

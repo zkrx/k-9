@@ -43,7 +43,8 @@ import com.fsck.k9.activity.K9PreferenceActivity;
 import com.fsck.k9.activity.ManageIdentities;
 import com.fsck.k9.crypto.OpenPgpApiHelper;
 import com.fsck.k9.mail.Folder;
-import com.fsck.k9.mail.Store;
+import com.fsck.k9.mail.MailStore;
+import com.fsck.k9.mail.ServerSettings.Type;
 import com.fsck.k9.mailstore.StorageManager;
 import com.fsck.k9.service.MailService;
 import org.openintents.openpgp.util.OpenPgpKeyPreference;
@@ -86,6 +87,7 @@ public class AccountSettings extends K9PreferenceActivity {
     private static final String PREFERENCE_NOTIFICATION_LED = "account_led";
     private static final String PREFERENCE_INCOMING = "incoming";
     private static final String PREFERENCE_OUTGOING = "outgoing";
+    private static final String PREFERENCE_REMOTE_FILTER = "remote_filter";
     private static final String PREFERENCE_DISPLAY_MODE = "folder_display_mode";
     private static final String PREFERENCE_SYNC_MODE = "folder_sync_mode";
     private static final String PREFERENCE_PUSH_MODE = "folder_push_mode";
@@ -213,11 +215,11 @@ public class AccountSettings extends K9PreferenceActivity {
         account = Preferences.getPreferences(this).getAccount(accountUuid);
 
         try {
-            final Store store = account.getRemoteStore();
-            isMoveCapable = store.isMoveCapable();
-            isPushCapable = store.isPushCapable();
-            isExpungeCapable = store.isExpungeCapable();
-            isSeenFlagSupported = store.isSeenFlagSupported();
+            final MailStore mailStore = account.getRemoteStore();
+            isMoveCapable = mailStore.isMoveCapable();
+            isPushCapable = mailStore.isPushCapable();
+            isExpungeCapable = mailStore.isExpungeCapable();
+            isSeenFlagSupported = mailStore.isSeenFlagSupported();
         } catch (Exception e) {
             Timber.e(e, "Could not get remote store");
         }
@@ -693,6 +695,14 @@ public class AccountSettings extends K9PreferenceActivity {
             }
         });
 
+        findPreference(PREFERENCE_REMOTE_FILTER).setOnPreferenceClickListener(
+                new Preference.OnPreferenceClickListener() {
+                    public boolean onPreferenceClick(Preference preference) {
+                        onRemoteFilterSettings();
+                        return true;
+                    }
+                });
+
         hasPgpCrypto = K9.isOpenPgpProviderConfigured();
         PreferenceScreen cryptoMenu = (PreferenceScreen) findPreference(PREFERENCE_CRYPTO);
         if (hasPgpCrypto) {
@@ -893,6 +903,10 @@ public class AccountSettings extends K9PreferenceActivity {
     private void onOutgoingSettings() {
         AccountSetupOutgoing.actionEditOutgoingSettings(this, account);
     }
+
+    //TODO: Support other remote filters
+    private void onRemoteFilterSettings() { AccountSetupRemoteFilter.actionEditRemoteFilterSettings(this, account,
+            Type.SIEVE);}
 
     public void onChooseChipColor() {
         showDialog(DIALOG_COLOR_PICKER_ACCOUNT);

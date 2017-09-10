@@ -45,13 +45,13 @@ class WebDavFolder extends Folder<WebDavMessage> {
     private boolean mIsOpen = false;
     private int mMessageCount = 0;
     private int mUnreadMessageCount = 0;
-    private WebDavStore store;
+    private WebDavMailStore store;
 
-    protected WebDavStore getStore() {
+    protected WebDavMailStore getStore() {
         return store;
     }
 
-    public WebDavFolder(WebDavStore nStore, String name) {
+    public WebDavFolder(WebDavMailStore nStore, String name) {
         super();
         store = nStore;
         this.mName = name;
@@ -487,7 +487,7 @@ class WebDavFolder extends Folder<WebDavMessage> {
 
         for (int i = 0, count = messages.size(); i < count; i++) {
             if (!(messages.get(i) instanceof WebDavMessage)) {
-                throw new MessagingException("WebDavStore fetch called with non-WebDavMessage");
+                throw new MessagingException("WebDavMailStore fetch called with non-WebDavMessage");
             }
             WebDavMessage wdMessage = (WebDavMessage) messages.get(i);
 
@@ -696,7 +696,7 @@ class WebDavFolder extends Folder<WebDavMessage> {
 
     @Override
     public String getUidFromMessageId(Message message) throws MessagingException {
-        Timber.e("Unimplemented method getUidFromMessageId in WebDavStore.WebDavFolder could lead to duplicate messages "
+        Timber.e("Unimplemented method getUidFromMessageId in WebDavMailStore.WebDavFolder could lead to duplicate messages "
                         + " being uploaded to the Sent folder");
         return null;
     }

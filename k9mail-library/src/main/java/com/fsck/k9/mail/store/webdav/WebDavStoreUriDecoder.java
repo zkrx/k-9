@@ -35,7 +35,7 @@ public class WebDavStoreUriDecoder {
         try {
             webDavUri = new URI(uri);
         } catch (URISyntaxException use) {
-            throw new IllegalArgumentException("Invalid WebDavStore URI", use);
+            throw new IllegalArgumentException("Invalid WebDavMailStore URI", use);
         }
 
         String scheme = webDavUri.getScheme();

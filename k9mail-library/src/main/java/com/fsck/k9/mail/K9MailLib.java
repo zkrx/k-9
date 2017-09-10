@@ -34,6 +34,12 @@ public class K9MailLib {
      */
     public static boolean DEBUG_PROTOCOL_WEBDAV = true;
 
+    /**
+     * Should K-9 log the conversation it has over the wire with
+     * ManageSieve servers?
+     */
+    public static boolean DEBUG_PROTOCOL_MANAGE_SIEVE = true;
+
     public static boolean isDebug() {
         return debugStatus.enabled();
     }

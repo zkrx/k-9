@@ -20,7 +20,7 @@ import com.fsck.k9.mail.MessagingException;
 import com.fsck.k9.mail.PushReceiver;
 import com.fsck.k9.mail.power.TracingPowerManager;
 import com.fsck.k9.mail.power.TracingPowerManager.TracingWakeLock;
-import com.fsck.k9.mail.store.RemoteStore;
+import com.fsck.k9.mail.store.RemoteMailStore;
 import timber.log.Timber;
 
 import static com.fsck.k9.mail.K9MailLib.PUSH_WAKE_LOCK_TIMEOUT;
@@ -44,7 +44,7 @@ class ImapFolderPusher extends ImapFolder {
     private volatile boolean idling = false;
 
 
-    public ImapFolderPusher(ImapStore store, String name, PushReceiver pushReceiver) {
+    public ImapFolderPusher(ImapMailStore store, String name, PushReceiver pushReceiver) {
         super(store, name);
         this.pushReceiver = pushReceiver;
 
@@ -714,7 +714,7 @@ class ImapFolderPusher extends ImapFolder {
 
         private void sendDone() {
             try {
-                imapConnection.setReadTimeout(RemoteStore.SOCKET_READ_TIMEOUT);
+                imapConnection.setReadTimeout(RemoteMailStore.SOCKET_READ_TIMEOUT);
                 imapConnection.sendContinuation("DONE");
             } catch (IOException e) {
                 imapConnection.close();

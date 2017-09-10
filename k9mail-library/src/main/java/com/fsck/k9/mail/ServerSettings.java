@@ -22,7 +22,8 @@ public class ServerSettings {
         IMAP(143, 993),
         SMTP(587, 465),
         WebDAV(80, 443),
-        POP3(110, 995);
+        POP3(110, 995),
+        SIEVE(4190, 4190);
 
         public final int defaultPort;
 
@@ -36,7 +37,7 @@ public class ServerSettings {
          */
         public final int defaultTlsPort;
 
-        private Type(int defaultPort, int defaultTlsPort) {
+        Type(int defaultPort, int defaultTlsPort) {
             this.defaultPort = defaultPort;
             this.defaultTlsPort = defaultTlsPort;
         }

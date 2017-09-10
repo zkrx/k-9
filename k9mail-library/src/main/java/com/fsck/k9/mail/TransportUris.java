@@ -8,7 +8,7 @@ import java.net.URLDecoder;
 import java.net.URLEncoder;
 
 import com.fsck.k9.mail.ServerSettings.Type;
-import com.fsck.k9.mail.store.webdav.WebDavStore;
+import com.fsck.k9.mail.store.webdav.WebDavMailStore;
 
 
 public class TransportUris {
@@ -192,11 +192,11 @@ public class TransportUris {
      *
      * <p>
      * <b>Note:</b> Everything related to sending messages via WebDAV is handled by
-     * {@link WebDavStore}. So the transport URI is the same as the store URI.
+     * {@link WebDavMailStore}. So the transport URI is the same as the store URI.
      * </p>
      */
     private static ServerSettings decodeWebDavUri(String uri) {
-        return WebDavStore.decodeUri(uri);
+        return WebDavMailStore.decodeUri(uri);
     }
 
     /**
@@ -204,11 +204,11 @@ public class TransportUris {
      *
      * <p>
      * <b>Note:</b> Everything related to sending messages via WebDAV is handled by
-     * {@link WebDavStore}. So the transport URI is the same as the store URI.
+     * {@link WebDavMailStore}. So the transport URI is the same as the store URI.
      * </p>
      */
     private static String createWebDavUri(ServerSettings server) {
-        return WebDavStore.createUri(server);
+        return WebDavMailStore.createUri(server);
     }
 
     private static String encodeUtf8(String s) {

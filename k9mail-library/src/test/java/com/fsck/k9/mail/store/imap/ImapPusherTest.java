@@ -22,13 +22,13 @@ import static org.mockito.Mockito.when;
 
 @RunWith(K9LibRobolectricTestRunner.class)
 public class ImapPusherTest {
-    private ImapStore imapStore;
+    private ImapMailStore imapStore;
     private TestImapPusher imapPusher;
 
 
     @Before
     public void setUp() throws Exception {
-        imapStore = mock(ImapStore.class);
+        imapStore = mock(ImapMailStore.class);
 
         PushReceiver pushReceiver = mock(PushReceiver.class);
         imapPusher = new TestImapPusher(imapStore, pushReceiver);
@@ -159,7 +159,7 @@ public class ImapPusherTest {
         private final List<ImapFolderPusher> imapFolderPushers = new ArrayList<>();
 
 
-        public TestImapPusher(ImapStore store, PushReceiver receiver) {
+        public TestImapPusher(ImapMailStore store, PushReceiver receiver) {
             super(store, receiver);
         }
 

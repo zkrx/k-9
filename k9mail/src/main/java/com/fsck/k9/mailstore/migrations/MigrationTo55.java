@@ -7,13 +7,14 @@ import java.util.List;
 import android.content.ContentValues;
 import android.database.sqlite.SQLiteDatabase;
 import android.text.TextUtils;
+
+import com.fsck.k9.mailstore.LocalMailStore;
 import timber.log.Timber;
 
 import com.fsck.k9.mail.FetchProfile;
 import com.fsck.k9.mail.MessagingException;
 import com.fsck.k9.mailstore.LocalFolder;
 import com.fsck.k9.mailstore.LocalMessage;
-import com.fsck.k9.mailstore.LocalStore;
 import com.fsck.k9.message.extractors.MessageFulltextCreator;
 
 
@@ -21,7 +22,7 @@ class MigrationTo55 {
     static void createFtsSearchTable(SQLiteDatabase db, MigrationsHelper migrationsHelper) {
         db.execSQL("CREATE VIRTUAL TABLE messages_fulltext USING fts4 (fulltext)");
 
-        LocalStore localStore = migrationsHelper.getLocalStore();
+        LocalMailStore localStore = migrationsHelper.getLocalStore();
         MessageFulltextCreator fulltextCreator = localStore.getMessageFulltextCreator();
 
         try {

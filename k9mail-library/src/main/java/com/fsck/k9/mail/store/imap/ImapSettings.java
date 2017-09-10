@@ -5,7 +5,7 @@ import com.fsck.k9.mail.ConnectionSecurity;
 import com.fsck.k9.mail.NetworkType;
 
 /**
- * Settings source for IMAP. Implemented in order to remove coupling between {@link ImapStore} and {@link ImapConnection}.
+ * Settings source for IMAP. Implemented in order to remove coupling between {@link ImapMailStore} and {@link ImapConnection}.
  */
 interface ImapSettings {
     String getHost();

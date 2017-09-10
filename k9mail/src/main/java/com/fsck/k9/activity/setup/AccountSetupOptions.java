@@ -12,7 +12,7 @@ import android.widget.CheckBox;
 import android.widget.Spinner;
 import com.fsck.k9.*;
 import com.fsck.k9.activity.K9Activity;
-import com.fsck.k9.mail.Store;
+import com.fsck.k9.mail.MailStore;
 
 public class AccountSetupOptions extends K9Activity implements OnClickListener {
     private static final String EXTRA_ACCOUNT = "account";
@@ -112,8 +112,8 @@ public class AccountSetupOptions extends K9Activity implements OnClickListener {
 
         boolean isPushCapable = false;
         try {
-            Store store = mAccount.getRemoteStore();
-            isPushCapable = store.isPushCapable();
+            MailStore mailStore = mAccount.getRemoteStore();
+            isPushCapable = mailStore.isPushCapable();
         } catch (Exception e) {
             Timber.e(e, "Could not get remote store");
         }

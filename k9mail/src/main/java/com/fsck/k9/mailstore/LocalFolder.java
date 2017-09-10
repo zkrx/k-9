@@ -73,7 +73,7 @@ public class LocalFolder extends Folder<LocalMessage> {
     private static final long INVALID_MESSAGE_PART_ID = -1;
 
 
-    private final LocalStore localStore;
+    private final LocalMailStore localStore;
     private final AttachmentInfoExtractor attachmentInfoExtractor;
 
 
@@ -97,7 +97,7 @@ public class LocalFolder extends Folder<LocalMessage> {
     private MoreMessages moreMessages = MoreMessages.UNKNOWN;
 
 
-    public LocalFolder(LocalStore localStore, String name) {
+    public LocalFolder(LocalMailStore localStore, String name) {
         super();
         this.localStore = localStore;
         this.name = name;
@@ -110,7 +110,7 @@ public class LocalFolder extends Folder<LocalMessage> {
         }
     }
 
-    public LocalFolder(LocalStore localStore, long databaseId) {
+    public LocalFolder(LocalMailStore localStore, long databaseId) {
         super();
         this.localStore = localStore;
         this.databaseId = databaseId;
@@ -155,7 +155,7 @@ public class LocalFolder extends Folder<LocalMessage> {
                 public Void doDbWork(final SQLiteDatabase db) throws WrappedException {
                     Cursor cursor = null;
                     try {
-                        String baseQuery = "SELECT " + LocalStore.GET_FOLDER_COLS + " FROM folders ";
+                        String baseQuery = "SELECT " + LocalMailStore.GET_FOLDER_COLS + " FROM folders ";
 
                         if (name != null) {
                             cursor = db.rawQuery(baseQuery + "where folders.name = ?", new String[] { name });
@@ -164,8 +164,8 @@ public class LocalFolder extends Folder<LocalMessage> {
                                     databaseId) });
                         }
 
-                        if (cursor.moveToFirst() && !cursor.isNull(LocalStore.FOLDER_ID_INDEX)) {
-                            int folderId = cursor.getInt(LocalStore.FOLDER_ID_INDEX);
+                        if (cursor.moveToFirst() && !cursor.isNull(LocalMailStore.FOLDER_ID_INDEX)) {
+                            int folderId = cursor.getInt(LocalMailStore.FOLDER_ID_INDEX);
                             if (folderId > 0) {
                                 open(cursor);
                             }
@@ -188,27 +188,27 @@ public class LocalFolder extends Folder<LocalMessage> {
     }
 
     void open(Cursor cursor) throws MessagingException {
-        databaseId = cursor.getInt(LocalStore.FOLDER_ID_INDEX);
-        name = cursor.getString(LocalStore.FOLDER_NAME_INDEX);
-        visibleLimit = cursor.getInt(LocalStore.FOLDER_VISIBLE_LIMIT_INDEX);
-        pushState = cursor.getString(LocalStore.FOLDER_PUSH_STATE_INDEX);
-        super.setStatus(cursor.getString(LocalStore.FOLDER_STATUS_INDEX));
+        databaseId = cursor.getInt(LocalMailStore.FOLDER_ID_INDEX);
+        name = cursor.getString(LocalMailStore.FOLDER_NAME_INDEX);
+        visibleLimit = cursor.getInt(LocalMailStore.FOLDER_VISIBLE_LIMIT_INDEX);
+        pushState = cursor.getString(LocalMailStore.FOLDER_PUSH_STATE_INDEX);
+        super.setStatus(cursor.getString(LocalMailStore.FOLDER_STATUS_INDEX));
         // Only want to set the local variable stored in the super class.  This class
         // does a DB update on setLastChecked
-        super.setLastChecked(cursor.getLong(LocalStore.FOLDER_LAST_CHECKED_INDEX));
-        super.setLastPush(cursor.getLong(LocalStore.FOLDER_LAST_PUSHED_INDEX));
-        isInTopGroup = cursor.getInt(LocalStore.FOLDER_TOP_GROUP_INDEX) == 1;
-        isIntegrate = cursor.getInt(LocalStore.FOLDER_INTEGRATE_INDEX) == 1;
+        super.setLastChecked(cursor.getLong(LocalMailStore.FOLDER_LAST_CHECKED_INDEX));
+        super.setLastPush(cursor.getLong(LocalMailStore.FOLDER_LAST_PUSHED_INDEX));
+        isInTopGroup = cursor.getInt(LocalMailStore.FOLDER_TOP_GROUP_INDEX) == 1;
+        isIntegrate = cursor.getInt(LocalMailStore.FOLDER_INTEGRATE_INDEX) == 1;
         String noClass = FolderClass.NO_CLASS.toString();
-        String displayClass = cursor.getString(LocalStore.FOLDER_DISPLAY_CLASS_INDEX);
+        String displayClass = cursor.getString(LocalMailStore.FOLDER_DISPLAY_CLASS_INDEX);
         this.displayClass = Folder.FolderClass.valueOf((displayClass == null) ? noClass : displayClass);
-        String notifyClass = cursor.getString(LocalStore.FOLDER_NOTIFY_CLASS_INDEX);
+        String notifyClass = cursor.getString(LocalMailStore.FOLDER_NOTIFY_CLASS_INDEX);
         this.notifyClass = Folder.FolderClass.valueOf((notifyClass == null) ? noClass : notifyClass);
-        String pushClass = cursor.getString(LocalStore.FOLDER_PUSH_CLASS_INDEX);
+        String pushClass = cursor.getString(LocalMailStore.FOLDER_PUSH_CLASS_INDEX);
         this.pushClass = Folder.FolderClass.valueOf((pushClass == null) ? noClass : pushClass);
-        String syncClass = cursor.getString(LocalStore.FOLDER_SYNC_CLASS_INDEX);
+        String syncClass = cursor.getString(LocalMailStore.FOLDER_SYNC_CLASS_INDEX);
         this.syncClass = Folder.FolderClass.valueOf((syncClass == null) ? noClass : syncClass);
-        String moreMessagesValue = cursor.getString(LocalStore.MORE_MESSAGES_INDEX);
+        String moreMessagesValue = cursor.getString(LocalMailStore.MORE_MESSAGES_INDEX);
         moreMessages = MoreMessages.fromDatabaseName(moreMessagesValue);
     }
 
@@ -816,7 +816,7 @@ public class LocalFolder extends Folder<LocalMessage> {
     throws MessagingException {
         open(OPEN_MODE_RW);
         throw new MessagingException(
-            "LocalStore.getMessages(int, int, MessageRetrievalListener) not yet implemented");
+            "LocalMailStore.getMessages(int, int, MessageRetrievalListener) not yet implemented");
     }
 
     @Override
@@ -869,7 +869,7 @@ public class LocalFolder extends Folder<LocalMessage> {
                         try {
                             cursor = db.rawQuery(
                                     "SELECT " +
-                                    LocalStore.GET_MESSAGES_COLS +
+                                    LocalMailStore.GET_MESSAGES_COLS +
                                     "FROM messages " +
                                     "LEFT JOIN message_parts ON (message_parts.id = messages.message_part_id) " +
                                     "LEFT JOIN threads ON (threads.message_id = messages.id) " +
@@ -944,7 +944,7 @@ public class LocalFolder extends Folder<LocalMessage> {
                     try {
                         open(OPEN_MODE_RW);
                         return LocalFolder.this.localStore.getMessages(listener, LocalFolder.this,
-                                "SELECT " + LocalStore.GET_MESSAGES_COLS +
+                                "SELECT " + LocalMailStore.GET_MESSAGES_COLS +
                                 "FROM messages " +
                                 "LEFT JOIN message_parts ON (message_parts.id = messages.message_part_id) " +
                                 "LEFT JOIN threads ON (threads.message_id = messages.id) " +
@@ -1307,7 +1307,7 @@ public class LocalFolder extends Folder<LocalMessage> {
     private void saveMessage(SQLiteDatabase db, Message message, boolean copy, Map<String, String> uidMap)
             throws MessagingException {
         if (!(message instanceof MimeMessage)) {
-            throw new Error("LocalStore can only store Messages that extend MimeMessage");
+            throw new Error("LocalMailStore can only store Messages that extend MimeMessage");
         }
 
         long oldMessageId = -1;
@@ -1370,7 +1370,7 @@ public class LocalFolder extends Folder<LocalMessage> {
             cv.put("sender_list", Address.pack(message.getFrom()));
             cv.put("date", message.getSentDate() == null
                     ? System.currentTimeMillis() : message.getSentDate().getTime());
-            cv.put("flags", LocalStore.serializeFlags(message.getFlags()));
+            cv.put("flags", LocalMailStore.serializeFlags(message.getFlags()));
             cv.put("deleted", message.isSet(Flag.DELETED) ? 1 : 0);
             cv.put("read", message.isSet(Flag.SEEN) ? 1 : 0);
             cv.put("flagged", message.isSet(Flag.FLAGGED) ? 1 : 0);
@@ -1765,7 +1765,7 @@ public class LocalFolder extends Folder<LocalMessage> {
         open(OPEN_MODE_RO);
 
         List<? extends Message> messages  = this.localStore.getMessages(null, this,
-                "SELECT " + LocalStore.GET_MESSAGES_COLS +
+                "SELECT " + LocalMailStore.GET_MESSAGES_COLS +
                 "FROM messages " +
                 "LEFT JOIN message_parts ON (message_parts.id = messages.message_part_id) " +
                 "LEFT JOIN threads ON (threads.message_id = messages.id) " +
@@ -2260,7 +2260,7 @@ public class LocalFolder extends Folder<LocalMessage> {
                         selection.append("folder_id = ? AND UID IN (");
                         selectionArgs.add(Long.toString(databaseId));
 
-                        int count = Math.min(messages.size() - start, LocalStore.UID_CHECK_BATCH_SIZE);
+                        int count = Math.min(messages.size() - start, LocalMailStore.UID_CHECK_BATCH_SIZE);
 
                         for (int i = start, end = start + count; i < end; i++) {
                             if (i > start) {
@@ -2274,8 +2274,8 @@ public class LocalFolder extends Folder<LocalMessage> {
 
                         selection.append(")");
 
-                        Cursor cursor = db.query("messages", LocalStore.UID_CHECK_PROJECTION,
-                                selection.toString(), selectionArgs.toArray(LocalStore.EMPTY_STRING_ARRAY),
+                        Cursor cursor = db.query("messages", LocalMailStore.UID_CHECK_PROJECTION,
+                                selection.toString(), selectionArgs.toArray(LocalMailStore.EMPTY_STRING_ARRAY),
                                 null, null, null);
 
                         try {

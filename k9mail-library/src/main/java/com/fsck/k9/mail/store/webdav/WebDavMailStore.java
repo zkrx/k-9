@@ -24,7 +24,7 @@ import com.fsck.k9.mail.Message;
 import com.fsck.k9.mail.MessagingException;
 import com.fsck.k9.mail.ServerSettings;
 import com.fsck.k9.mail.filter.Base64;
-import com.fsck.k9.mail.store.RemoteStore;
+import com.fsck.k9.mail.store.RemoteMailStore;
 import com.fsck.k9.mail.store.StoreConfig;
 import javax.net.ssl.SSLException;
 import javax.xml.parsers.ParserConfigurationException;
@@ -59,7 +59,7 @@ import static com.fsck.k9.mail.helper.UrlEncodingHelper.decodeUtf8;
  * </pre>
  */
 @SuppressWarnings("deprecation")
-public class WebDavStore extends RemoteStore {
+public class WebDavMailStore extends RemoteMailStore {
 
     public static WebDavStoreSettings decodeUri(String uri) {
         return WebDavStoreUriDecoder.decode(uri);
@@ -91,14 +91,14 @@ public class WebDavStore extends RemoteStore {
     private Folder sendFolder = null;
     private Map<String, WebDavFolder> folderList = new HashMap<>();
 
-    public WebDavStore(StoreConfig storeConfig, WebDavHttpClient.WebDavHttpClientFactory clientFactory)
+    public WebDavMailStore(StoreConfig storeConfig, WebDavHttpClient.WebDavHttpClientFactory clientFactory)
             throws MessagingException {
         super(storeConfig, null);
         httpClientFactory = clientFactory;
 
         WebDavStoreSettings settings;
         try {
-            settings = WebDavStore.decodeUri(storeConfig.getStoreUri());
+            settings = WebDavMailStore.decodeUri(storeConfig.getStoreUri());
         } catch (IllegalArgumentException e) {
             throw new MessagingException("Error while decoding store URI", e);
         }

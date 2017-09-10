@@ -23,7 +23,7 @@ import com.fsck.k9.Preferences;
 import com.fsck.k9.cache.EmailProviderCacheCursor;
 import com.fsck.k9.helper.Utility;
 import com.fsck.k9.mail.MessagingException;
-import com.fsck.k9.mailstore.LocalStore;
+import com.fsck.k9.mailstore.LocalMailStore;
 import com.fsck.k9.mailstore.LockableDatabase;
 import com.fsck.k9.mailstore.LockableDatabase.DbCallback;
 import com.fsck.k9.mailstore.LockableDatabase.WrappedException;
@@ -609,11 +609,11 @@ public class EmailProvider extends ContentProvider {
     }
 
     private LockableDatabase getDatabase(Account account) {
-        LocalStore localStore;
+        LocalMailStore localStore;
         try {
             localStore = account.getLocalStore();
         } catch (MessagingException e) {
-            throw new RuntimeException("Couldn't get LocalStore", e);
+            throw new RuntimeException("Couldn't get LocalMailStore", e);
         }
 
         return localStore.getDatabase();

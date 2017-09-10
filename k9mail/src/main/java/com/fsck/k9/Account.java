@@ -19,6 +19,10 @@ import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.net.Uri;
+
+import com.fsck.k9.filterstore.LocalFilterStore;
+import com.fsck.k9.mail.remoteFilter.RemoteFilterStore;
+import com.fsck.k9.mail.store.RemoteMailStore;
 import timber.log.Timber;
 
 import com.fsck.k9.activity.setup.AccountSetupCheckSettings.CheckDirection;
@@ -26,14 +30,12 @@ import com.fsck.k9.helper.Utility;
 import com.fsck.k9.mail.Address;
 import com.fsck.k9.mail.MessagingException;
 import com.fsck.k9.mail.NetworkType;
-import com.fsck.k9.mail.Store;
 import com.fsck.k9.mail.Folder.FolderClass;
 import com.fsck.k9.mail.filter.Base64;
-import com.fsck.k9.mail.store.RemoteStore;
 import com.fsck.k9.mail.store.StoreConfig;
 import com.fsck.k9.mailstore.StorageManager;
 import com.fsck.k9.mailstore.StorageManager.StorageProvider;
-import com.fsck.k9.mailstore.LocalStore;
+import com.fsck.k9.mailstore.LocalMailStore;
 import com.fsck.k9.preferences.StorageEditor;
 import com.fsck.k9.preferences.Storage;
 import com.fsck.k9.provider.EmailProvider;
@@ -170,6 +172,7 @@ public class Account implements BaseAccount, StoreConfig {
      */
     private String localStorageProviderId;
     private String transportUri;
+    private String manageSieveStoreUri;
     private String description;
     private String alwaysBcc;
     private int automaticCheckIntervalMinutes;
@@ -813,7 +816,7 @@ public class Account implements BaseAccount, StoreConfig {
             Utility.closeQuietly(cursor);
         }
 
-        LocalStore localStore = getLocalStore();
+        LocalMailStore localStore = getLocalStore();
         if (K9.measureAccounts()) {
             stats.size = localStore.getSize();
         }
@@ -864,6 +867,7 @@ public class Account implements BaseAccount, StoreConfig {
         return accountUuid;
     }
 
+    @Override
     public synchronized String getStoreUri() {
         return storeUri;
     }
@@ -872,12 +876,22 @@ public class Account implements BaseAccount, StoreConfig {
         this.storeUri = storeUri;
     }
 
+    @Override
     public synchronized String getTransportUri() {
         return transportUri;
     }
 
     public synchronized void setTransportUri(String transportUri) {
         this.transportUri = transportUri;
+    }
+
+    @Override
+    public synchronized String getRemoteFilterStoreUri() {
+        return manageSieveStoreUri;
+    }
+
+    public synchronized void setRemoteFilterStoreUri(String manageSieveStoreUri) {
+        this.manageSieveStoreUri = manageSieveStoreUri;
     }
 
     @Override
@@ -1264,12 +1278,20 @@ public class Account implements BaseAccount, StoreConfig {
         return oldMaxPushFolders != maxPushFolders;
     }
 
-    public LocalStore getLocalStore() throws MessagingException {
-        return LocalStore.getInstance(this, K9.app);
+    public LocalMailStore getLocalStore() throws MessagingException {
+        return LocalMailStore.getInstance(this, K9.app);
     }
 
-    public Store getRemoteStore() throws MessagingException {
-        return RemoteStore.getInstance(K9.app, this);
+    public RemoteMailStore getRemoteStore() throws MessagingException {
+        return RemoteMailStore.getInstance(K9.app, this);
+    }
+
+    public LocalFilterStore getLocalFilterStore() throws MessagingException {
+        return LocalFilterStore.getInstance(this, K9.app);
+    }
+
+    public RemoteFilterStore getRemoteFilterStore() throws MessagingException {
+        return RemoteFilterStore.getInstance(K9.app, this);
     }
 
     // It'd be great if this actually went into the store implementation

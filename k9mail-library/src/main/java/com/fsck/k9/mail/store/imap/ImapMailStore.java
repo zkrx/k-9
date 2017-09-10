@@ -27,7 +27,7 @@ import com.fsck.k9.mail.Pusher;
 import com.fsck.k9.mail.ServerSettings;
 import com.fsck.k9.mail.oauth.OAuth2TokenProvider;
 import com.fsck.k9.mail.ssl.TrustedSocketFactory;
-import com.fsck.k9.mail.store.RemoteStore;
+import com.fsck.k9.mail.store.RemoteMailStore;
 import com.fsck.k9.mail.store.StoreConfig;
 import timber.log.Timber;
 
@@ -38,7 +38,7 @@ import timber.log.Timber;
  * TODO Need a default response handler for things like folder updates
  * </pre>
  */
-public class ImapStore extends RemoteStore {
+public class ImapMailStore extends RemoteMailStore {
     private Set<Flag> permanentFlagsIndex = EnumSet.noneOf(Flag.class);
     private ConnectivityManager connectivityManager;
     private OAuth2TokenProvider oauthTokenProvider;
@@ -73,7 +73,7 @@ public class ImapStore extends RemoteStore {
         return ImapStoreUriCreator.create(server);
     }
 
-    public ImapStore(StoreConfig storeConfig, TrustedSocketFactory trustedSocketFactory,
+    public ImapMailStore(StoreConfig storeConfig, TrustedSocketFactory trustedSocketFactory,
             ConnectivityManager connectivityManager, OAuth2TokenProvider oauthTokenProvider) throws MessagingException {
         super(storeConfig, trustedSocketFactory);
 

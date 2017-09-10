@@ -2,13 +2,13 @@ package com.fsck.k9.search;
 
 import java.util.List;
 
+import com.fsck.k9.mailstore.LocalMailStore;
 import timber.log.Timber;
 
 import com.fsck.k9.Account;
 import com.fsck.k9.mail.MessagingException;
 import com.fsck.k9.mail.Folder;
 import com.fsck.k9.mailstore.LocalFolder;
-import com.fsck.k9.mailstore.LocalStore;
 import com.fsck.k9.search.SearchSpecification.Attribute;
 import com.fsck.k9.search.SearchSpecification.SearchCondition;
 import com.fsck.k9.search.SearchSpecification.SearchField;
@@ -107,7 +107,7 @@ public class SqlQueryBuilder {
     private static long getFolderId(Account account, String folderName) {
         long folderId = 0;
         try {
-            LocalStore localStore = account.getLocalStore();
+            LocalMailStore localStore = account.getLocalStore();
             LocalFolder folder = localStore.getFolder(folderName);
             folder.open(Folder.OPEN_MODE_RO);
             folderId = folder.getDatabaseId();

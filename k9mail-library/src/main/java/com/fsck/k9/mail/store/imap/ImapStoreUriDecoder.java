@@ -43,7 +43,7 @@ class ImapStoreUriDecoder {
         try {
             imapUri = new URI(uri);
         } catch (URISyntaxException use) {
-            throw new IllegalArgumentException("Invalid ImapStore URI", use);
+            throw new IllegalArgumentException("Invalid ImapMailStore URI", use);
         }
 
         String scheme = imapUri.getScheme();

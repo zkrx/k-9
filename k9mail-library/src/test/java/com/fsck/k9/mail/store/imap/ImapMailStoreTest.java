@@ -36,9 +36,9 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 
-public class ImapStoreTest {
+public class ImapMailStoreTest {
     private StoreConfig storeConfig;
-    private TestImapStore imapStore;
+    private TestImapMailStore imapStore;
 
     @Before
     public void setUp() throws Exception {
@@ -47,7 +47,7 @@ public class ImapStoreTest {
         ConnectivityManager connectivityManager = mock(ConnectivityManager.class);
         OAuth2TokenProvider oauth2TokenProvider = mock(OAuth2TokenProvider.class);
 
-        imapStore = new TestImapStore(storeConfig, trustedSocketFactory, connectivityManager, oauth2TokenProvider);
+        imapStore = new TestImapMailStore(storeConfig, trustedSocketFactory, connectivityManager, oauth2TokenProvider);
     }
 
     @Test
@@ -311,10 +311,10 @@ public class ImapStoreTest {
     }
 
 
-    static class TestImapStore extends ImapStore {
+    static class TestImapMailStore extends ImapMailStore {
         private Deque<ImapConnection> imapConnections = new ArrayDeque<>();
 
-        public TestImapStore(StoreConfig storeConfig, TrustedSocketFactory trustedSocketFactory,
+        public TestImapMailStore(StoreConfig storeConfig, TrustedSocketFactory trustedSocketFactory,
                 ConnectivityManager connectivityManager, OAuth2TokenProvider oauth2TokenProvider) throws MessagingException {
             super(storeConfig, trustedSocketFactory, connectivityManager, oauth2TokenProvider);
         }

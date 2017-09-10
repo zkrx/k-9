@@ -21,7 +21,7 @@ class ImapStoreUriCreator {
      * @return An ImapStore URI that holds the same information as the {@code server} parameter.
      *
      * @see com.fsck.k9.mail.store.StoreConfig#getStoreUri()
-     * @see ImapStore#decodeUri(String)
+     * @see ImapMailStore#decodeUri(String)
      */
     public static String create(ServerSettings server) {
         String userEnc = encodeUtf8(server.username);
@@ -65,7 +65,7 @@ class ImapStoreUriCreator {
             }
             return new URI(scheme, userInfo, server.host, server.port, path, null, null).toString();
         } catch (URISyntaxException e) {
-            throw new IllegalArgumentException("Can't create ImapStore URI", e);
+            throw new IllegalArgumentException("Can't create ImapMailStore URI", e);
         }
     }
 }

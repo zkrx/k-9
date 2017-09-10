@@ -17,7 +17,7 @@ public class WebDavStoreUriCreator {
      * @param server The {@link ServerSettings} object that holds the server settings.
      * @return A WebDavStore URI that holds the same information as the {@code server} parameter.
      * @see StoreConfig#getStoreUri()
-     * @see WebDavStore#decodeUri(String)
+     * @see WebDavMailStore#decodeUri(String)
      */
     public static String create(ServerSettings server) {
         String userEnc = encodeUtf8(server.username);
@@ -55,7 +55,7 @@ public class WebDavStoreUriCreator {
             return new URI(scheme, userInfo, server.host, server.port, uriPath,
                     null, null).toString();
         } catch (URISyntaxException e) {
-            throw new IllegalArgumentException("Can't create WebDavStore URI", e);
+            throw new IllegalArgumentException("Can't create WebDavMailStore URI", e);
         }
     }
 }

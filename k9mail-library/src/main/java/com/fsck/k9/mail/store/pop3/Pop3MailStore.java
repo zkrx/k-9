@@ -9,7 +9,7 @@ import com.fsck.k9.mail.filter.Hex;
 import com.fsck.k9.mail.internet.MimeMessage;
 import com.fsck.k9.mail.ServerSettings.Type;
 import com.fsck.k9.mail.ssl.TrustedSocketFactory;
-import com.fsck.k9.mail.store.RemoteStore;
+import com.fsck.k9.mail.store.RemoteMailStore;
 import com.fsck.k9.mail.store.StoreConfig;
 
 import javax.net.ssl.SSLException;
@@ -39,7 +39,7 @@ import static com.fsck.k9.mail.helper.UrlEncodingHelper.decodeUtf8;
 import static com.fsck.k9.mail.helper.UrlEncodingHelper.encodeUtf8;
 
 
-public class Pop3Store extends RemoteStore {
+public class Pop3MailStore extends RemoteMailStore {
 
     private static final String STLS_COMMAND = "STLS";
     private static final String USER_COMMAND = "USER";
@@ -90,7 +90,7 @@ public class Pop3Store extends RemoteStore {
         try {
             pop3Uri = new URI(uri);
         } catch (URISyntaxException use) {
-            throw new IllegalArgumentException("Invalid Pop3Store URI", use);
+            throw new IllegalArgumentException("Invalid Pop3MailStore URI", use);
         }
 
         String scheme = pop3Uri.getScheme();
@@ -160,7 +160,7 @@ public class Pop3Store extends RemoteStore {
      * @return A Pop3Store URI that holds the same information as the {@code server} parameter.
      *
      * @see StoreConfig#getStoreUri()
-     * @see Pop3Store#decodeUri(String)
+     * @see Pop3MailStore#decodeUri(String)
      */
     public static String createUri(ServerSettings server) {
         String userEnc = encodeUtf8(server.username);
@@ -195,7 +195,7 @@ public class Pop3Store extends RemoteStore {
             return new URI(scheme, userInfo, server.host, server.port, null, null,
                     null).toString();
         } catch (URISyntaxException e) {
-            throw new IllegalArgumentException("Can't create Pop3Store URI", e);
+            throw new IllegalArgumentException("Can't create Pop3MailStore URI", e);
         }
     }
 
@@ -218,7 +218,7 @@ public class Pop3Store extends RemoteStore {
     private boolean mTopNotSupported;
 
 
-    public Pop3Store(StoreConfig storeConfig, TrustedSocketFactory socketFactory) throws MessagingException {
+    public Pop3MailStore(StoreConfig storeConfig, TrustedSocketFactory socketFactory) throws MessagingException {
         super(storeConfig, socketFactory);
 
         ServerSettings settings;

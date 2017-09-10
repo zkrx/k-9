@@ -25,12 +25,12 @@ import com.fsck.k9.mail.Folder;
 import com.fsck.k9.mail.Message;
 import com.fsck.k9.mail.MessageRetrievalListener;
 import com.fsck.k9.mail.MessagingException;
-import com.fsck.k9.mail.Store;
+import com.fsck.k9.mail.MailStore;
 import com.fsck.k9.mail.Transport;
 import com.fsck.k9.mail.TransportProvider;
 import com.fsck.k9.mailstore.LocalFolder;
 import com.fsck.k9.mailstore.LocalMessage;
-import com.fsck.k9.mailstore.LocalStore;
+import com.fsck.k9.mailstore.LocalMailStore;
 import com.fsck.k9.mailstore.UnavailableStorageException;
 import com.fsck.k9.notification.NotificationController;
 import com.fsck.k9.search.LocalSearch;
@@ -98,9 +98,9 @@ public class MessagingControllerTest {
     @Mock
     private Folder remoteFolder;
     @Mock
-    private LocalStore localStore;
+    private LocalMailStore localStore;
     @Mock
-    private Store remoteStore;
+    private MailStore remoteMailStore;
     @Mock
     private NotificationController notificationController;
     @Mock
@@ -266,7 +266,7 @@ public class MessagingControllerTest {
         LocalFolder newLocalFolder = mock(LocalFolder.class);
 
         List<Folder> folders = Collections.singletonList(remoteFolder);
-        when(remoteStore.getPersonalNamespaces(false)).thenAnswer(createAnswer(folders));
+        when(remoteMailStore.getPersonalNamespaces(false)).thenAnswer(createAnswer(folders));
         when(remoteFolder.getName()).thenReturn("NewFolder");
         when(localStore.getFolder("NewFolder")).thenReturn(newLocalFolder);
 
@@ -283,7 +283,7 @@ public class MessagingControllerTest {
         when(localStore.getPersonalNamespaces(false))
                 .thenReturn(Collections.singletonList(oldLocalFolder));
         List<Folder> folders = Collections.emptyList();
-        when(remoteStore.getPersonalNamespaces(false)).thenAnswer(createAnswer(folders));
+        when(remoteMailStore.getPersonalNamespaces(false)).thenAnswer(createAnswer(folders));
 
         controller.refreshRemoteSynchronous(account, listener);
 
@@ -296,7 +296,7 @@ public class MessagingControllerTest {
         when(localStore.getPersonalNamespaces(false))
                 .thenReturn(Collections.singletonList(localFolder));
         List<Folder> folders = Collections.singletonList(remoteFolder);
-        when(remoteStore.getPersonalNamespaces(false)).thenAnswer(createAnswer(folders));
+        when(remoteMailStore.getPersonalNamespaces(false)).thenAnswer(createAnswer(folders));
 
         controller.refreshRemoteSynchronous(account, listener);
 
@@ -312,7 +312,7 @@ public class MessagingControllerTest {
         when(localStore.getPersonalNamespaces(false))
                 .thenReturn(Collections.singletonList(missingSpecialFolder));
         List<Folder> folders = Collections.emptyList();
-        when(remoteStore.getPersonalNamespaces(false)).thenAnswer(createAnswer(folders));
+        when(remoteMailStore.getPersonalNamespaces(false)).thenAnswer(createAnswer(folders));
 
         controller.refreshRemoteSynchronous(account, listener);
 
@@ -938,8 +938,8 @@ public class MessagingControllerTest {
     }
 
     private void configureRemoteStoreWithFolder() throws MessagingException {
-        when(account.getRemoteStore()).thenReturn(remoteStore);
-        when(remoteStore.getFolder(FOLDER_NAME)).thenReturn(remoteFolder);
+        when(account.getRemoteStore()).thenReturn(remoteMailStore);
+        when(remoteMailStore.getFolder(FOLDER_NAME)).thenReturn(remoteFolder);
         when(remoteFolder.getName()).thenReturn(FOLDER_NAME);
     }
 

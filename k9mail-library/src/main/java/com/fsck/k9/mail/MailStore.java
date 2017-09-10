@@ -4,6 +4,9 @@ package com.fsck.k9.mail;
 
 import java.util.List;
 
+import com.fsck.k9.Store;
+
+
 /**
  * Store is the access point for an email message store. It's location can be
  * local or remote and no specific protocol is defined. Store is intended to
@@ -12,7 +15,7 @@ import java.util.List;
  * performance on mobile devices. Implementations of this class should focus on
  * making as few network connections as possible.
  */
-public abstract class Store {
+public abstract class MailStore implements Store {
     public abstract Folder<? extends Message> getFolder(String name);
 
     public abstract List <? extends Folder > getPersonalNamespaces(boolean forceListAll) throws MessagingException;

@@ -25,6 +25,7 @@
 
 <PreferenceScreen
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:key="main">
 
     <PreferenceScreen
@@ -153,6 +154,16 @@
             android:key="incoming"
             android:title="@string/account_settings_incoming_label"
             android:summary="@string/account_settings_incoming_summary" />
+
+        <CheckBoxPreference
+            android:persistent="false"
+            android:key="enable_remote_filter_management"
+            android:title="@string/enable_remote_filter_management" />
+
+        <PreferenceScreen
+            android:key="remote_filter"
+            android:title="@string/account_settings_remote_filter_label"
+            android:summary="@string/account_settings_remote_filter_summary" />
 
         <PreferenceScreen
             android:key="push_advanced"

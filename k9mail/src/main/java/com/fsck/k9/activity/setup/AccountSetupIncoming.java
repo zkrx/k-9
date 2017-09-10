@@ -37,12 +37,12 @@ import com.fsck.k9.activity.setup.AccountSetupCheckSettings.CheckDirection;
 import com.fsck.k9.helper.Utility;
 import com.fsck.k9.mail.AuthType;
 import com.fsck.k9.mail.ConnectionSecurity;
+import com.fsck.k9.mail.MailStore;
 import com.fsck.k9.mail.NetworkType;
 import com.fsck.k9.mail.ServerSettings;
 import com.fsck.k9.mail.ServerSettings.Type;
-import com.fsck.k9.mail.Store;
 import com.fsck.k9.mail.TransportUris;
-import com.fsck.k9.mail.store.RemoteStore;
+import com.fsck.k9.mail.store.RemoteMailStore;
 import com.fsck.k9.mail.store.imap.ImapStoreSettings;
 import com.fsck.k9.mail.store.webdav.WebDavStoreSettings;
 import com.fsck.k9.service.MailService;
@@ -166,7 +166,7 @@ public class AccountSetupIncoming extends K9Activity implements OnClickListener 
         boolean editSettings = Intent.ACTION_EDIT.equals(getIntent().getAction());
 
         try {
-            ServerSettings settings = RemoteStore.decodeStoreUri(mAccount.getStoreUri());
+            ServerSettings settings = RemoteMailStore.decodeStoreUri(mAccount.getStoreUri());
 
             if (savedInstanceState == null) {
                 // The first item is selected if settings.authenticationType is null or is not in mAuthTypeAdapter
@@ -501,8 +501,8 @@ public class AccountSetupIncoming extends K9Activity implements OnClickListener 
             if (Intent.ACTION_EDIT.equals(getIntent().getAction())) {
                 boolean isPushCapable = false;
                 try {
-                    Store store = mAccount.getRemoteStore();
-                    isPushCapable = store.isPushCapable();
+                    MailStore mailStore = mAccount.getRemoteStore();
+                    isPushCapable = mailStore.isPushCapable();
                 } catch (Exception e) {
                     Timber.e(e, "Could not get remote store");
                 }
@@ -585,7 +585,7 @@ public class AccountSetupIncoming extends K9Activity implements OnClickListener 
             ServerSettings settings = new ServerSettings(mStoreType, host, port,
                     connectionSecurity, authType, username, password, clientCertificateAlias, extra);
 
-            mAccount.setStoreUri(RemoteStore.createStoreUri(settings));
+            mAccount.setStoreUri(RemoteMailStore.createStoreUri(settings));
 
             mAccount.setCompression(NetworkType.MOBILE, mCompressionMobile.isChecked());
             mAccount.setCompression(NetworkType.WIFI, mCompressionWifi.isChecked());

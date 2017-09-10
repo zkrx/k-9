@@ -11,6 +11,9 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
+
+import com.fsck.k9.mail.remoteFilter.RemoteFilterStore;
+import com.fsck.k9.mail.store.webdav.WebDavMailStore;
 import timber.log.Timber;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -25,10 +28,9 @@ import com.fsck.k9.fragment.ConfirmationDialogFragment.ConfirmationDialogFragmen
 import com.fsck.k9.mail.AuthenticationFailedException;
 import com.fsck.k9.mail.CertificateValidationException;
 import com.fsck.k9.mail.MessagingException;
-import com.fsck.k9.mail.Store;
+import com.fsck.k9.mail.MailStore;
 import com.fsck.k9.mail.Transport;
 import com.fsck.k9.mail.TransportProvider;
-import com.fsck.k9.mail.store.webdav.WebDavStore;
 import com.fsck.k9.mail.filter.Hex;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateEncodingException;
@@ -57,7 +59,8 @@ public class AccountSetupCheckSettings extends K9Activity implements OnClickList
 
     public enum CheckDirection {
         INCOMING,
-        OUTGOING
+        OUTGOING,
+        REMOTE_FILTER
     }
 
     private Handler mHandler = new Handler();
@@ -471,11 +474,15 @@ public class AccountSetupCheckSettings extends K9Activity implements OnClickList
                     checkOutgoing();
                     break;
                 }
+                case REMOTE_FILTER: {
+                    checkRemoteFilter();
+                    break;
+                }
             }
         }
 
         private void checkOutgoing() throws MessagingException {
-            if (!(account.getRemoteStore() instanceof WebDavStore)) {
+            if (!(account.getRemoteStore() instanceof WebDavMailStore)) {
                 publishProgress(R.string.account_setup_check_settings_check_outgoing_msg);
             }
             Transport transport = TransportProvider.getInstance().getTransport(K9.app, account);
@@ -488,20 +495,27 @@ public class AccountSetupCheckSettings extends K9Activity implements OnClickList
         }
 
         private void checkIncoming() throws MessagingException {
-            Store store = account.getRemoteStore();
-            if (store instanceof WebDavStore) {
+            MailStore mailStore = account.getRemoteStore();
+            if (mailStore instanceof WebDavMailStore) {
                 publishProgress(R.string.account_setup_check_settings_authenticate);
             } else {
                 publishProgress(R.string.account_setup_check_settings_check_incoming_msg);
             }
-            store.checkSettings();
+            mailStore.checkSettings();
 
-            if (store instanceof WebDavStore) {
+            if (mailStore instanceof WebDavMailStore) {
                 publishProgress(R.string.account_setup_check_settings_fetch);
             }
             MessagingController.getInstance(getApplication()).listFoldersSynchronous(account, true, null);
             MessagingController.getInstance(getApplication())
                     .synchronizeMailbox(account, account.getInboxFolderName(), null, null);
+        }
+
+        private void checkRemoteFilter() throws MessagingException {
+            RemoteFilterStore store = account.getRemoteFilterStore();
+            publishProgress(R.string.account_setup_check_settings_authenticate);
+            store.checkSettings();
+            MessagingController.getInstance(getApplication()).listFiltersSynchronous(account, true, null);
         }
 
         @Override

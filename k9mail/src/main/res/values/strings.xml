@@ -453,6 +453,20 @@ Please submit bug reports, contribute new features and ask questions at
     <string name="account_setup_incoming_webdav_mailbox_path_label">Mailbox alias</string>
     <string name="account_setup_incoming_webdav_mailbox_path_hint">Optional</string>
 
+    <!-- Remote Filter -->
+    <string name="enable_remote_filter_management">Enable management of remote filter</string>
+    <string name="account_setup_remote_filter_title">Remote filter server settings</string>
+    <string name="account_setup_remote_filter_username_label">Username</string>
+    <string name="account_setup_remote_filter_password_label">Password</string>
+    <string name="account_setup_remote_filter_client_certificate_label">Client certificate</string>
+    <string name="account_setup_remote_filter_sieve_server_label">SIEVE server</string>
+    <string name="account_setup_remote_filter_port_label">Port</string>
+    <string name="account_setup_remote_filter_security_label">Security</string>
+    <string name="account_setup_remote_filter_auth_type_label">Authentication</string>
+    <string name="account_setup_remote_filter_security_none_label">None</string>
+    <string name="account_setup_remote_filter_security_tls_label">STARTTLS</string>
+    <string name="account_setup_remote_filter_invalid_setting_combo_notice">\"<xliff:g id="setting_1_label">%1$s</xliff:g> = <xliff:g id="setting_1_value">%2$s</xliff:g>\" is not valid with \"<xliff:g id="setting_2_label">%3$s</xliff:g> = <xliff:g id="setting_2_value">%4$s</xliff:g>\"</string>
+
     <string name="account_setup_outgoing_title">Outgoing server settings</string>
     <string name="account_setup_outgoing_smtp_server_label">SMTP server</string>
     <string name="account_setup_outgoing_port_label">Port</string>
@@ -692,6 +706,8 @@ Please submit bug reports, contribute new features and ask questions at
 
     <string name="account_settings_incoming_label">Incoming server</string>
     <string name="account_settings_incoming_summary">Configure the incoming mail server</string>
+    <string name="account_settings_remote_filter_label">Enable remote filter management</string>
+    <string name="account_settings_remote_filter_summary">Configure remote filter management</string>
     <string name="account_settings_outgoing_label">Outgoing server</string>
     <string name="account_settings_outgoing_summary">Configure the outgoing mail (SMTP) server</string>
     <string name="account_settings_description_label">Account name</string>

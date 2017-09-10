@@ -27,7 +27,7 @@ import timber.log.Timber;
 
 
 public class LocalMessage extends MimeMessage {
-    private final LocalStore localStore;
+    private final LocalMailStore localStore;
 
     private long databaseId;
     private long rootId;
@@ -42,11 +42,11 @@ public class LocalMessage extends MimeMessage {
     private boolean headerNeedsUpdating = false;
 
 
-    private LocalMessage(LocalStore localStore) {
+    private LocalMessage(LocalMailStore localStore) {
         this.localStore = localStore;
     }
 
-    LocalMessage(LocalStore localStore, String uid, Folder folder) {
+    LocalMessage(LocalMailStore localStore, String uid, Folder folder) {
         this.localStore = localStore;
         this.mUid = uid;
         this.mFolder = folder;
@@ -54,16 +54,16 @@ public class LocalMessage extends MimeMessage {
 
 
     void populateFromGetMessageCursor(Cursor cursor) throws MessagingException {
-        final String subject = cursor.getString(LocalStore.MSG_INDEX_SUBJECT);
+        final String subject = cursor.getString(LocalMailStore.MSG_INDEX_SUBJECT);
         this.setSubject(subject == null ? "" : subject);
 
-        Address[] from = Address.unpack(cursor.getString(LocalStore.MSG_INDEX_SENDER_LIST));
+        Address[] from = Address.unpack(cursor.getString(LocalMailStore.MSG_INDEX_SENDER_LIST));
         if (from.length > 0) {
             this.setFrom(from[0]);
         }
-        this.setInternalSentDate(new Date(cursor.getLong(LocalStore.MSG_INDEX_DATE)));
-        this.setUid(cursor.getString(LocalStore.MSG_INDEX_UID));
-        String flagList = cursor.getString(LocalStore.MSG_INDEX_FLAGS);
+        this.setInternalSentDate(new Date(cursor.getLong(LocalMailStore.MSG_INDEX_DATE)));
+        this.setUid(cursor.getString(LocalMailStore.MSG_INDEX_UID));
+        String flagList = cursor.getString(LocalMailStore.MSG_INDEX_FLAGS);
         if (flagList != null && flagList.length() > 0) {
             String[] flags = flagList.split(",");
 
@@ -79,39 +79,39 @@ public class LocalMessage extends MimeMessage {
                 }
             }
         }
-        this.databaseId = cursor.getLong(LocalStore.MSG_INDEX_ID);
-        this.setRecipients(RecipientType.TO, Address.unpack(cursor.getString(LocalStore.MSG_INDEX_TO)));
-        this.setRecipients(RecipientType.CC, Address.unpack(cursor.getString(LocalStore.MSG_INDEX_CC)));
-        this.setRecipients(RecipientType.BCC, Address.unpack(cursor.getString(LocalStore.MSG_INDEX_BCC)));
-        this.setReplyTo(Address.unpack(cursor.getString(LocalStore.MSG_INDEX_REPLY_TO)));
+        this.databaseId = cursor.getLong(LocalMailStore.MSG_INDEX_ID);
+        this.setRecipients(RecipientType.TO, Address.unpack(cursor.getString(LocalMailStore.MSG_INDEX_TO)));
+        this.setRecipients(RecipientType.CC, Address.unpack(cursor.getString(LocalMailStore.MSG_INDEX_CC)));
+        this.setRecipients(RecipientType.BCC, Address.unpack(cursor.getString(LocalMailStore.MSG_INDEX_BCC)));
+        this.setReplyTo(Address.unpack(cursor.getString(LocalMailStore.MSG_INDEX_REPLY_TO)));
 
-        this.attachmentCount = cursor.getInt(LocalStore.MSG_INDEX_ATTACHMENT_COUNT);
-        this.setInternalDate(new Date(cursor.getLong(LocalStore.MSG_INDEX_INTERNAL_DATE)));
-        this.setMessageId(cursor.getString(LocalStore.MSG_INDEX_MESSAGE_ID_HEADER));
+        this.attachmentCount = cursor.getInt(LocalMailStore.MSG_INDEX_ATTACHMENT_COUNT);
+        this.setInternalDate(new Date(cursor.getLong(LocalMailStore.MSG_INDEX_INTERNAL_DATE)));
+        this.setMessageId(cursor.getString(LocalMailStore.MSG_INDEX_MESSAGE_ID_HEADER));
 
-        String previewTypeString = cursor.getString(LocalStore.MSG_INDEX_PREVIEW_TYPE);
+        String previewTypeString = cursor.getString(LocalMailStore.MSG_INDEX_PREVIEW_TYPE);
         DatabasePreviewType databasePreviewType = DatabasePreviewType.fromDatabaseValue(previewTypeString);
         previewType = databasePreviewType.getPreviewType();
         if (previewType == PreviewType.TEXT) {
-            preview = cursor.getString(LocalStore.MSG_INDEX_PREVIEW);
+            preview = cursor.getString(LocalMailStore.MSG_INDEX_PREVIEW);
         } else {
             preview = "";
         }
 
         if (this.mFolder == null) {
-            LocalFolder f = new LocalFolder(this.localStore, cursor.getInt(LocalStore.MSG_INDEX_FOLDER_ID));
+            LocalFolder f = new LocalFolder(this.localStore, cursor.getInt(LocalMailStore.MSG_INDEX_FOLDER_ID));
             f.open(LocalFolder.OPEN_MODE_RW);
             this.mFolder = f;
         }
 
-        threadId = (cursor.isNull(LocalStore.MSG_INDEX_THREAD_ID)) ? -1 : cursor.getLong(LocalStore.MSG_INDEX_THREAD_ID);
-        rootId = (cursor.isNull(LocalStore.MSG_INDEX_THREAD_ROOT_ID)) ? -1 : cursor.getLong(LocalStore.MSG_INDEX_THREAD_ROOT_ID);
+        threadId = (cursor.isNull(LocalMailStore.MSG_INDEX_THREAD_ID)) ? -1 : cursor.getLong(LocalMailStore.MSG_INDEX_THREAD_ID);
+        rootId = (cursor.isNull(LocalMailStore.MSG_INDEX_THREAD_ROOT_ID)) ? -1 : cursor.getLong(LocalMailStore.MSG_INDEX_THREAD_ROOT_ID);
 
-        boolean deleted = (cursor.getInt(LocalStore.MSG_INDEX_FLAG_DELETED) == 1);
-        boolean read = (cursor.getInt(LocalStore.MSG_INDEX_FLAG_READ) == 1);
-        boolean flagged = (cursor.getInt(LocalStore.MSG_INDEX_FLAG_FLAGGED) == 1);
-        boolean answered = (cursor.getInt(LocalStore.MSG_INDEX_FLAG_ANSWERED) == 1);
-        boolean forwarded = (cursor.getInt(LocalStore.MSG_INDEX_FLAG_FORWARDED) == 1);
+        boolean deleted = (cursor.getInt(LocalMailStore.MSG_INDEX_FLAG_DELETED) == 1);
+        boolean read = (cursor.getInt(LocalMailStore.MSG_INDEX_FLAG_READ) == 1);
+        boolean flagged = (cursor.getInt(LocalMailStore.MSG_INDEX_FLAG_FLAGGED) == 1);
+        boolean answered = (cursor.getInt(LocalMailStore.MSG_INDEX_FLAG_ANSWERED) == 1);
+        boolean forwarded = (cursor.getInt(LocalMailStore.MSG_INDEX_FLAG_FORWARDED) == 1);
 
         setFlagInternal(Flag.DELETED, deleted);
         setFlagInternal(Flag.SEEN, read);
@@ -119,10 +119,10 @@ public class LocalMessage extends MimeMessage {
         setFlagInternal(Flag.ANSWERED, answered);
         setFlagInternal(Flag.FORWARDED, forwarded);
 
-        setMessagePartId(cursor.getLong(LocalStore.MSG_INDEX_MESSAGE_PART_ID));
-        mimeType = cursor.getString(LocalStore.MSG_INDEX_MIME_TYPE);
+        setMessagePartId(cursor.getLong(LocalMailStore.MSG_INDEX_MESSAGE_PART_ID));
+        mimeType = cursor.getString(LocalMailStore.MSG_INDEX_MIME_TYPE);
 
-        byte[] header = cursor.getBlob(LocalStore.MSG_INDEX_HEADER_DATA);
+        byte[] header = cursor.getBlob(LocalMailStore.MSG_INDEX_HEADER_DATA);
         if (header != null) {
             MessageHeaderParser.parse(this, new ByteArrayInputStream(header));
         } else {
@@ -270,7 +270,7 @@ public class LocalMessage extends MimeMessage {
                      * Set the flags on the message.
                      */
                     ContentValues cv = new ContentValues();
-                    cv.put("flags", LocalStore.serializeFlags(getFlags()));
+                    cv.put("flags", LocalMailStore.serializeFlags(getFlags()));
                     cv.put("read", isSet(Flag.SEEN) ? 1 : 0);
                     cv.put("flagged", isSet(Flag.FLAGGED) ? 1 : 0);
                     cv.put("answered", isSet(Flag.ANSWERED) ? 1 : 0);

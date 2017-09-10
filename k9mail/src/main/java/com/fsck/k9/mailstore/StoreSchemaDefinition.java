@@ -2,7 +2,6 @@ package com.fsck.k9.mailstore;
 
 
 import java.util.List;
-import java.util.Locale;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
@@ -10,29 +9,27 @@ import timber.log.Timber;
 
 import com.fsck.k9.Account;
 import com.fsck.k9.BuildConfig;
-import com.fsck.k9.K9;
 import com.fsck.k9.mail.Flag;
 import com.fsck.k9.mail.Folder;
 import com.fsck.k9.mailstore.migrations.Migrations;
 import com.fsck.k9.mailstore.migrations.MigrationsHelper;
 import com.fsck.k9.preferences.Storage;
 
-import static com.fsck.k9.mailstore.LocalStore.DB_VERSION;
+import static com.fsck.k9.mailstore.LocalMailStore.DB_VERSION;
 import static java.lang.String.format;
-import static java.util.Locale.US;
 
 
 class StoreSchemaDefinition implements LockableDatabase.SchemaDefinition {
-    private final LocalStore localStore;
+    private final LocalMailStore localStore;
 
 
-    StoreSchemaDefinition(LocalStore localStore) {
+    StoreSchemaDefinition(LocalMailStore localStore) {
         this.localStore = localStore;
     }
 
     @Override
     public int getVersion() {
-        return LocalStore.DB_VERSION;
+        return LocalMailStore.DB_VERSION;
     }
 
     @Override
@@ -64,14 +61,14 @@ class StoreSchemaDefinition implements LockableDatabase.SchemaDefinition {
                 Migrations.upgradeDatabase(db, migrationsHelper);
             }
 
-            db.setVersion(LocalStore.DB_VERSION);
+            db.setVersion(LocalMailStore.DB_VERSION);
 
             db.setTransactionSuccessful();
         } finally {
             db.endTransaction();
         }
 
-        if (db.getVersion() != LocalStore.DB_VERSION) {
+        if (db.getVersion() != LocalMailStore.DB_VERSION) {
             throw new RuntimeException("Database upgrade failed!");
         }
     }
@@ -218,15 +215,15 @@ class StoreSchemaDefinition implements LockableDatabase.SchemaDefinition {
 
 
     private static class RealMigrationsHelper implements MigrationsHelper {
-        private final LocalStore localStore;
+        private final LocalMailStore localStore;
 
 
-        public RealMigrationsHelper(LocalStore localStore) {
+        public RealMigrationsHelper(LocalMailStore localStore) {
             this.localStore = localStore;
         }
 
         @Override
-        public LocalStore getLocalStore() {
+        public LocalMailStore getLocalStore() {
             return localStore;
         }
 
@@ -247,7 +244,7 @@ class StoreSchemaDefinition implements LockableDatabase.SchemaDefinition {
 
         @Override
         public String serializeFlags(List<Flag> flags) {
-            return LocalStore.serializeFlags(flags);
+            return LocalMailStore.serializeFlags(flags);
         }
     }
 

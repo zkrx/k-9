@@ -12,7 +12,7 @@ import com.fsck.k9.mail.ServerSettings;
 /**
  * This class is used to store the decoded contents of an ImapStore URI.
  *
- * @see ImapStore#decodeUri(String)
+ * @see ImapMailStore#decodeUri(String)
  */
 public class ImapStoreSettings extends ServerSettings {
     public static final String AUTODETECT_NAMESPACE_KEY = "autoDetectNamespace";

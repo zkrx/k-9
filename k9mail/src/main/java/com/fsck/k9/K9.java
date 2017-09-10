@@ -37,7 +37,7 @@ import com.fsck.k9.mail.K9MailLib;
 import com.fsck.k9.mail.Message;
 import com.fsck.k9.mail.internet.BinaryTempFileBody;
 import com.fsck.k9.mail.ssl.LocalKeyStore;
-import com.fsck.k9.mailstore.LocalStore;
+import com.fsck.k9.mailstore.LocalMailStore;
 import com.fsck.k9.power.DeviceIdleManager;
 import com.fsck.k9.preferences.Storage;
 import com.fsck.k9.preferences.StorageEditor;
@@ -656,7 +656,7 @@ public class K9 extends Application {
      * {@code SharedPreference}.
      *
      * <p>
-     * If the stored version matches {@link LocalStore#DB_VERSION} we know that the databases are
+     * If the stored version matches {@link LocalMailStore#DB_VERSION} we know that the databases are
      * up to date.<br>
      * Using {@code SharedPreferences} should be a lot faster than opening all SQLite databases to
      * get the current database version.
@@ -671,7 +671,7 @@ public class K9 extends Application {
 
         int cachedVersion = sDatabaseVersionCache.getInt(KEY_LAST_ACCOUNT_DATABASE_VERSION, 0);
 
-        if (cachedVersion >= LocalStore.DB_VERSION) {
+        if (cachedVersion >= LocalMailStore.DB_VERSION) {
             K9.setDatabasesUpToDate(false);
         }
     }
@@ -1412,7 +1412,7 @@ public class K9 extends Application {
      *
      * <p>
      * This method is only used for optimizations. If it returns {@code true} we can be certain that
-     * getting a {@link LocalStore} instance won't trigger a schema upgrade.
+     * getting a {@link LocalMailStore} instance won't trigger a schema upgrade.
      * </p>
      *
      * @return {@code true}, if we know that all databases are using the current database schema.
@@ -1436,7 +1436,7 @@ public class K9 extends Application {
 
         if (save) {
             Editor editor = sDatabaseVersionCache.edit();
-            editor.putInt(KEY_LAST_ACCOUNT_DATABASE_VERSION, LocalStore.DB_VERSION);
+            editor.putInt(KEY_LAST_ACCOUNT_DATABASE_VERSION, LocalMailStore.DB_VERSION);
             editor.apply();
         }
     }
