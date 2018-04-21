@@ -71,6 +71,20 @@ public class AddressTest {
         }
     }
 
+
+    /**
+     * test invalid format
+     */
+    @Test
+    public void parse_withBadFormat_shouldSet() {
+        Address[] addresses = Address.parse(
+                "The Google Accounts <contact@virginpulse.com>@stlig.vivastreet.org.uk");
+
+        assertEquals(1, addresses.length);
+        assertEquals("The Google Accounts", addresses[0].getPersonal());
+        assertEquals("contact@virginpulse.com", addresses[0].getAddress());
+    }
+
     @Test
     public void parse_withEncodedPersonal_shouldDecode() {
         Address[] addresses = Address.parse(

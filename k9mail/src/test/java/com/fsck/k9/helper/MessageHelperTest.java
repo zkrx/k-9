@@ -12,6 +12,7 @@ import org.junit.Test;
 import org.robolectric.RuntimeEnvironment;
 
 import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertTrue;
 
 
@@ -85,6 +86,15 @@ public class MessageHelperTest extends RobolectricTest {
         CharSequence friendly = MessageHelper.toFriendly(address, contactsWithFakeContact,
                 false, false, 0);
         assertEquals("test@testor.com", friendly.toString());
+    }
+
+    @Test
+    public void testToFriendlyWithEmailWithNoAddressWithoutCorrespondentNamesReturnsValue() throws Exception {
+        Address[] addresses = Address.parse(
+                "The Google Accounts <contact@virginpulse.com>@stlig.vivastreet.org.uk");
+        CharSequence friendly = MessageHelper.toFriendly(addresses[0], contactsWithFakeContact,
+                false, false, 0);
+        assertNotNull(friendly);
     }
 
     @Test
