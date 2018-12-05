@@ -65,7 +65,7 @@ public class FolderList extends K9ListActivity {
     private ActionBar actionBar;
 
     class FolderListHandler extends Handler {
-        public void newFolders(final List<FolderInfoHolder> newFolders) {
+        void newFolders(final List<FolderInfoHolder> newFolders) {
             runOnUiThread(new Runnable() {
                 public void run() {
                     adapter.mFolders.clear();
@@ -76,7 +76,7 @@ public class FolderList extends K9ListActivity {
             });
         }
 
-        public void workingAccount(final int res) {
+        void workingAccount(final int res) {
             runOnUiThread(new Runnable() {
                 public void run() {
                     String toastText = getString(res, account.getDescription());
@@ -105,7 +105,7 @@ public class FolderList extends K9ListActivity {
 
         }
 
-        public void dataChanged() {
+        void dataChanged() {
             runOnUiThread(new Runnable() {
                 public void run() {
                     adapter.notifyDataSetChanged();
@@ -619,18 +619,16 @@ public class FolderList extends K9ListActivity {
         };
 
 
-        public int getFolderIndex(String folder) {
+        int getFolderIndex(String folder) {
             FolderInfoHolder searchHolder = new FolderInfoHolder();
             searchHolder.serverId = folder;
             return   mFilteredFolders.indexOf(searchHolder);
         }
 
-        public FolderInfoHolder getFolder(String folder) {
-            FolderInfoHolder holder = null;
-
+        FolderInfoHolder getFolder(String folder) {
             int index = getFolderIndex(folder);
             if (index >= 0) {
-                holder = (FolderInfoHolder) getItem(index);
+                FolderInfoHolder holder = (FolderInfoHolder) getItem(index);
                 if (holder != null) {
                     return holder;
                 }
@@ -647,7 +645,7 @@ public class FolderList extends K9ListActivity {
             }
         }
 
-        public View getItemView(int itemPosition, View convertView, ViewGroup parent) {
+        View getItemView(int itemPosition, View convertView, ViewGroup parent) {
             FolderInfoHolder folder = (FolderInfoHolder) getItem(itemPosition);
             View view;
             if (convertView != null) {
@@ -705,28 +703,9 @@ public class FolderList extends K9ListActivity {
             return mFilter;
         }
 
-        /**
-         * Filter to search for occurrences of the search-expression in any place of the
-         * folder-name instead of doing just a prefix-search.
-         *
-         * @author Marcus@Wolschon.biz
-         */
         public class FolderListFilter extends Filter {
-            private CharSequence mSearchTerm;
-
-            public CharSequence getSearchTerm() {
-                return mSearchTerm;
-            }
-
-            /**
-             * Do the actual search.
-             * {@inheritDoc}
-             *
-             * @see #publishResults(CharSequence, FilterResults)
-             */
             @Override
             protected FilterResults performFiltering(CharSequence searchTerm) {
-                mSearchTerm = searchTerm;
                 FilterResults results = new FilterResults();
 
                 Locale locale = Locale.getDefault();
@@ -737,7 +716,6 @@ public class FolderList extends K9ListActivity {
                 } else {
                     final String searchTermString = searchTerm.toString().toLowerCase(locale);
                     final String[] words = searchTermString.split(" ");
-                    final int wordCount = words.length;
 
                     final List<FolderInfoHolder> newValues = new ArrayList<>();
 
@@ -747,8 +725,8 @@ public class FolderList extends K9ListActivity {
                         }
                         final String valueText = value.displayName.toLowerCase(locale);
 
-                        for (int k = 0; k < wordCount; k++) {
-                            if (valueText.contains(words[k])) {
+                        for (String word : words) {
+                            if (valueText.contains(word)) {
                                 newValues.add(value);
                                 break;
                             }
@@ -762,10 +740,6 @@ public class FolderList extends K9ListActivity {
                 return results;
             }
 
-            /**
-             * Publish the results to the user-interface.
-             * {@inheritDoc}
-             */
             @SuppressWarnings("unchecked")
             @Override
             protected void publishResults(CharSequence constraint, FilterResults results) {
@@ -778,10 +752,10 @@ public class FolderList extends K9ListActivity {
     }
 
     static class FolderViewHolder {
-        public TextView folderName;
-        public TextView folderStatus;
+        TextView folderName;
+        TextView folderStatus;
 
-        public String folderServerId;
-        public LinearLayout folderListItemLayout;
+        String folderServerId;
+        LinearLayout folderListItemLayout;
     }
 }
