@@ -11,10 +11,6 @@ import com.fsck.k9.mailstore.LocalFolder;
 public class FolderInfoHolder implements Comparable<FolderInfoHolder> {
     public String serverId;
     public String displayName;
-    public long lastChecked;
-    public int unreadMessageCount = -1;
-    public int flaggedMessageCount = -1;
-    public boolean loading;
     public String status;
     public boolean lastCheckFailed;
     public Folder folder;
@@ -62,22 +58,9 @@ public class FolderInfoHolder implements Comparable<FolderInfoHolder> {
         populate(context, folder, account);
     }
 
-    public FolderInfoHolder(Context context, LocalFolder folder, Account account, int unreadCount) {
-        populate(context, folder, account, unreadCount);
-    }
-
-    public void populate(Context context, LocalFolder folder, Account account, int unreadCount) {
-        populate(context, folder, account);
-        this.unreadMessageCount = unreadCount;
-        folder.close();
-
-    }
-
-
     public void populate(Context context, LocalFolder folder, Account account) {
         this.folder = folder;
         this.serverId = folder.getServerId();
-        this.lastChecked = folder.getLastUpdate();
 
         this.status = truncateStatus(folder.getStatus());
 
