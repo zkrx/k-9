@@ -623,12 +623,12 @@ public class MessageList extends K9Activity implements MessageListFragmentListen
             return;
         }
 
-        ManageFoldersActivity.actionHandleAccount(this, account);
+        ManageFoldersActivity.Companion.actionHandleAccount(this, account);
     }
 
     public void openRealAccount(Account realAccount) {
         if (realAccount.getAutoExpandFolder() == null) {
-            ManageFoldersActivity.actionHandleAccount(this, realAccount);
+            ManageFoldersActivity.Companion.actionHandleAccount(this, realAccount);
         } else {
             LocalSearch search = new LocalSearch(realAccount.getAutoExpandFolder());
             search.addAllowedFolder(realAccount.getAutoExpandFolder());
@@ -873,7 +873,7 @@ public class MessageList extends K9Activity implements MessageListFragmentListen
     }
 
     private void onShowFolderList() {
-        ManageFoldersActivity.actionHandleAccount(this, account);
+        ManageFoldersActivity.Companion.actionHandleAccount(this, account);
         finish();
     }
 

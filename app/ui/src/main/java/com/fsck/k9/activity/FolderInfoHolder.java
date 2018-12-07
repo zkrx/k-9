@@ -14,6 +14,7 @@ public class FolderInfoHolder implements Comparable<FolderInfoHolder> {
     public String status;
     public boolean lastCheckFailed;
     public Folder folder;
+    public boolean loading;
     public boolean pushActive;
     public boolean moreMessages;
 

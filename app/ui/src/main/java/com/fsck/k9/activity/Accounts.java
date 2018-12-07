@@ -637,7 +637,7 @@ public class Accounts extends K9ListActivity implements OnItemClickListener {
                 return false;
             }
             if (realAccount.getAutoExpandFolder() == null) {
-                ManageFoldersActivity.actionHandleAccount(this, realAccount);
+                ManageFoldersActivity.Companion.actionHandleAccount(this, realAccount);
             } else {
                 LocalSearch search = new LocalSearch(realAccount.getAutoExpandFolder());
                 search.addAllowedFolder(realAccount.getAutoExpandFolder());
@@ -1697,7 +1697,7 @@ public class Accounts extends K9ListActivity implements OnItemClickListener {
                 holder.folders.setVisibility(View.VISIBLE);
                 holder.folders.setOnClickListener(new OnClickListener() {
                     public void onClick(View v) {
-                        ManageFoldersActivity.actionHandleAccount(Accounts.this, (Account)account);
+                        ManageFoldersActivity.Companion.actionHandleAccount(Accounts.this, (Account)account);
 
                     }
                 });

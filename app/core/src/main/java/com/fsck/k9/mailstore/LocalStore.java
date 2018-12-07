@@ -236,7 +236,7 @@ public class LocalStore {
         return context;
     }
 
-    Account getAccount() {
+    public Account getAccount() {
         return account;
     }
 
