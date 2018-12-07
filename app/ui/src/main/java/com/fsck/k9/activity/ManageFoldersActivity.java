@@ -48,7 +48,7 @@ import de.cketti.library.changelog.ChangeLog;
 import timber.log.Timber;
 
 
-public class FolderList extends K9ListActivity {
+public class ManageFoldersActivity extends K9ListActivity {
     private static final String EXTRA_ACCOUNT = "account";
     private static final String EXTRA_FROM_SHORTCUT = "fromShortcut";
 
@@ -121,7 +121,7 @@ public class FolderList extends K9ListActivity {
      */
 
     public static Intent actionHandleAccountIntent(Context context, Account account, boolean fromShortcut) {
-        Intent intent = new Intent(context, FolderList.class);
+        Intent intent = new Intent(context, ManageFoldersActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         intent.putExtra(EXTRA_ACCOUNT, account.getUuid());
 
@@ -436,7 +436,7 @@ public class FolderList extends K9ListActivity {
 
             @Override
             public void listFoldersStarted(Account account) {
-                if (account.equals(FolderList.this.account)) {
+                if (account.equals(ManageFoldersActivity.this.account)) {
                     handler.progress(true);
                 }
                 super.listFoldersStarted(account);
@@ -445,7 +445,7 @@ public class FolderList extends K9ListActivity {
 
             @Override
             public void listFoldersFailed(Account account, String message) {
-                if (account.equals(FolderList.this.account)) {
+                if (account.equals(ManageFoldersActivity.this.account)) {
                     handler.progress(false);
                     runOnUiThread(new Runnable() {
                         @Override
@@ -460,7 +460,7 @@ public class FolderList extends K9ListActivity {
 
             @Override
             public void listFoldersFinished(Account account) {
-                if (account.equals(FolderList.this.account)) {
+                if (account.equals(ManageFoldersActivity.this.account)) {
 
                     handler.progress(false);
                     MessagingController.getInstance(getApplication()).refreshListener(adapter.mListener);
@@ -472,7 +472,7 @@ public class FolderList extends K9ListActivity {
 
             @Override
             public void listFolders(Account account, List<LocalFolder> folders) {
-                if (account.equals(FolderList.this.account)) {
+                if (account.equals(ManageFoldersActivity.this.account)) {
 
                     List<FolderInfoHolder> newFolders = new LinkedList<>();
                     List<FolderInfoHolder> topFolders = new LinkedList<>();
@@ -497,9 +497,9 @@ public class FolderList extends K9ListActivity {
                         }
 
                         if (holder == null) {
-                            holder = new FolderInfoHolder(context, folder, FolderList.this.account);
+                            holder = new FolderInfoHolder(context, folder, ManageFoldersActivity.this.account);
                         } else {
-                            holder.populate(context, folder, FolderList.this.account);
+                            holder.populate(context, folder, ManageFoldersActivity.this.account);
 
                         }
                         if (folder.isInTopGroup()) {
@@ -519,7 +519,7 @@ public class FolderList extends K9ListActivity {
             @Override
             public void synchronizeMailboxStarted(Account account, String folderServerId, String folderName) {
                 super.synchronizeMailboxStarted(account, folderServerId, folderName);
-                if (account.equals(FolderList.this.account)) {
+                if (account.equals(ManageFoldersActivity.this.account)) {
 
                     handler.progress(true);
                     handler.dataChanged();
@@ -530,7 +530,7 @@ public class FolderList extends K9ListActivity {
             @Override
             public void synchronizeMailboxFinished(Account account, String folderServerId, int totalMessagesInMailbox, int numNewMessages) {
                 super.synchronizeMailboxFinished(account, folderServerId, totalMessagesInMailbox, numNewMessages);
-                if (account.equals(FolderList.this.account)) {
+                if (account.equals(ManageFoldersActivity.this.account)) {
                     handler.progress(false);
                     refreshFolder(account, folderServerId);
                 }
@@ -541,14 +541,14 @@ public class FolderList extends K9ListActivity {
                 LocalFolder localFolder = null;
                 try {
                     if (account != null && folderServerId != null) {
-                        if (!account.isAvailable(FolderList.this)) {
+                        if (!account.isAvailable(ManageFoldersActivity.this)) {
                             Timber.i("not refreshing folder of unavailable account");
                             return;
                         }
                         localFolder = DI.get(LocalStoreProvider.class).getInstance(account).getFolder(folderServerId);
                         FolderInfoHolder folderHolder = getFolder(folderServerId);
                         if (folderHolder != null) {
-                            folderHolder.populate(context, localFolder, FolderList.this.account);
+                            folderHolder.populate(context, localFolder, ManageFoldersActivity.this.account);
                             handler.dataChanged();
                         }
                     }
@@ -565,7 +565,7 @@ public class FolderList extends K9ListActivity {
             @Override
             public void synchronizeMailboxFailed(Account account, String folderServerId, String message) {
                 super.synchronizeMailboxFailed(account, folderServerId, message);
-                if (!account.equals(FolderList.this.account)) {
+                if (!account.equals(ManageFoldersActivity.this.account)) {
                     return;
                 }
                 handler.progress(false);
@@ -579,14 +579,14 @@ public class FolderList extends K9ListActivity {
 
             @Override
             public void emptyTrashCompleted(Account account) {
-                if (account.equals(FolderList.this.account)) {
-                    refreshFolder(account, FolderList.this.account.getTrashFolder());
+                if (account.equals(ManageFoldersActivity.this.account)) {
+                    refreshFolder(account, ManageFoldersActivity.this.account.getTrashFolder());
                 }
             }
 
             @Override
             public void folderStatusChanged(Account account, String folderServerId, int unreadMessageCount) {
-                if (account.equals(FolderList.this.account)) {
+                if (account.equals(ManageFoldersActivity.this.account)) {
                     refreshFolder(account, folderServerId);
                     informUserOfStatus();
                 }
@@ -595,8 +595,8 @@ public class FolderList extends K9ListActivity {
             @Override
             public void sendPendingMessagesCompleted(Account account) {
                 super.sendPendingMessagesCompleted(account);
-                if (account.equals(FolderList.this.account)) {
-                    refreshFolder(account, FolderList.this.account.getOutboxFolder());
+                if (account.equals(ManageFoldersActivity.this.account)) {
+                    refreshFolder(account, ManageFoldersActivity.this.account.getOutboxFolder());
                 }
             }
 
@@ -604,7 +604,7 @@ public class FolderList extends K9ListActivity {
             public void sendPendingMessagesStarted(Account account) {
                 super.sendPendingMessagesStarted(account);
 
-                if (account.equals(FolderList.this.account)) {
+                if (account.equals(ManageFoldersActivity.this.account)) {
                     handler.dataChanged();
                 }
             }
@@ -612,8 +612,8 @@ public class FolderList extends K9ListActivity {
             @Override
             public void sendPendingMessagesFailed(Account account) {
                 super.sendPendingMessagesFailed(account);
-                if (account.equals(FolderList.this.account)) {
-                    refreshFolder(account, FolderList.this.account.getOutboxFolder());
+                if (account.equals(ManageFoldersActivity.this.account)) {
+                    refreshFolder(account, ManageFoldersActivity.this.account.getOutboxFolder());
                 }
             }
         };

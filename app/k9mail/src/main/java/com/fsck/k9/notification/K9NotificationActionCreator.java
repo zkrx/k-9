@@ -15,7 +15,7 @@ import com.fsck.k9.K9;
 import com.fsck.k9.Preferences;
 import com.fsck.k9.R;
 import com.fsck.k9.activity.Accounts;
-import com.fsck.k9.activity.FolderList;
+import com.fsck.k9.activity.ManageFoldersActivity;
 import com.fsck.k9.activity.MessageList;
 import com.fsck.k9.controller.MessageReference;
 import com.fsck.k9.activity.NotificationDeleteConfirmation;
@@ -221,7 +221,7 @@ class K9NotificationActionCreator implements NotificationActionCreator {
     private TaskStackBuilder buildFolderListBackStack(Account account) {
         TaskStackBuilder stack = buildAccountsBackStack();
 
-        Intent intent = FolderList.actionHandleAccountIntent(context, account, false);
+        Intent intent = ManageFoldersActivity.actionHandleAccountIntent(context, account, false);
 
         stack.addNextIntent(intent);
 

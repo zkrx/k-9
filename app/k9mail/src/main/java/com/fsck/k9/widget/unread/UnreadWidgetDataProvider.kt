@@ -3,10 +3,9 @@ package com.fsck.k9.widget.unread
 import android.content.Context
 import android.content.Intent
 import com.fsck.k9.Account
-import com.fsck.k9.K9
 import com.fsck.k9.Preferences
 import com.fsck.k9.R
-import com.fsck.k9.activity.FolderList
+import com.fsck.k9.activity.ManageFoldersActivity
 import com.fsck.k9.activity.MessageList
 import com.fsck.k9.controller.MessagingController
 import com.fsck.k9.search.LocalSearch
@@ -60,7 +59,7 @@ class UnreadWidgetDataProvider(
 
     private fun getClickIntentForAccount(account: Account): Intent {
         if (account.autoExpandFolder == null) {
-            return FolderList.actionHandleAccountIntent(context, account, false)
+            return ManageFoldersActivity.actionHandleAccountIntent(context, account, false)
         }
 
         val search = LocalSearch(account.autoExpandFolder)
