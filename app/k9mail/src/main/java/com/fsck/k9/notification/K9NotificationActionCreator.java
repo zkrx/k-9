@@ -221,7 +221,7 @@ class K9NotificationActionCreator implements NotificationActionCreator {
     private TaskStackBuilder buildFolderListBackStack(Account account) {
         TaskStackBuilder stack = buildAccountsBackStack();
 
-        Intent intent = ManageFoldersActivity.Companion.actionHandleAccountIntent(context, account, false);
+        Intent intent = ManageFoldersActivity.actionHandleAccountIntent(context, account, false);
 
         stack.addNextIntent(intent);
 

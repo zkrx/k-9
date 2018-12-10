@@ -7,6 +7,7 @@ import android.arch.lifecycle.Observer
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.support.v7.widget.RecyclerView
 import android.text.TextUtils.TruncateAt
 import android.view.*
 import android.widget.AdapterView.OnItemClickListener
@@ -32,7 +33,7 @@ import timber.log.Timber
 import java.util.*
 
 @SuppressLint("StringFormatInvalid")
-class ManageFoldersActivity : K9ListActivity() {
+class ManageFoldersActivity : K9RecyclerActivity<ThisViewHolder>() {
     private val localStoreProvider: LocalStoreProvider by inject()
     private val preferences: Preferences by inject()
     private val messagingController: MessagingController by inject()
@@ -57,8 +58,6 @@ class ManageFoldersActivity : K9ListActivity() {
         listView.apply {
             scrollBarStyle = View.SCROLLBARS_INSIDE_OVERLAY
             isLongClickable = true
-            isFastScrollEnabled = true
-            isScrollingCacheEnabled = false
             onItemClickListener = OnItemClickListener { _, _, position, _ ->
                 onClickFolder((folderListAdapter.getItem(position) as FolderInfoHolder).serverId)
             }
@@ -290,8 +289,20 @@ class ManageFoldersActivity : K9ListActivity() {
         return true
     }
 
-    internal inner class FolderListAdapter : BaseAdapter() {
+    internal inner class FolderListAdapter : RecyclerView.Adapter<ThisViewHolder>() {
         private val folders = ArrayList<FolderInfoHolder>()
+
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ThisViewHolder {
+            TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        }
+
+        override fun getItemCount(): Int {
+            return folders.size
+        }
+
+        override fun onBindViewHolder(holder: ThisViewHolder, position: Int) {
+            TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        }
 
         fun getItem(position: Long): Any {
             return getItem(position.toInt())
@@ -303,10 +314,6 @@ class ManageFoldersActivity : K9ListActivity() {
 
         override fun getItemId(position: Int): Long {
             return folders[position].folder.serverId.hashCode().toLong()
-        }
-
-        override fun getCount(): Int {
-            return folders.size
         }
 
         override fun isEnabled(item: Int): Boolean {
@@ -412,8 +419,6 @@ class ManageFoldersActivity : K9ListActivity() {
 
             return view
         }
-
-        override fun hasStableIds() = true
     }
 
     internal class FolderViewHolder(view: View) {
@@ -427,6 +432,7 @@ class ManageFoldersActivity : K9ListActivity() {
         private const val EXTRA_ACCOUNT = "account"
         private const val EXTRA_FROM_SHORTCUT = "fromShortcut"
 
+        @JvmStatic
         fun actionHandleAccountIntent(context: Context, account: Account, fromShortcut: Boolean): Intent {
             val intent = Intent(context, ManageFoldersActivity::class.java)
             intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
@@ -439,9 +445,12 @@ class ManageFoldersActivity : K9ListActivity() {
             return intent
         }
 
+        @JvmStatic
         fun actionHandleAccount(context: Context, account: Account) {
             val intent = actionHandleAccountIntent(context, account, false)
             context.startActivity(intent)
         }
     }
 }
+
+class ThisViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
