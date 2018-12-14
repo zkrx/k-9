@@ -629,10 +629,6 @@ public class SettingsImporter {
     static Imported parseSettings(InputStream inputStream, boolean globalSettings, List<String> accountUuids,
             boolean overview) throws SettingsImportExportException {
 
-        if (!overview && accountUuids == null) {
-            throw new IllegalArgumentException("Argument 'accountUuids' must not be null.");
-        }
-
         try {
             XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
             //factory.setNamespaceAware(true);
@@ -847,7 +843,7 @@ public class SettingsImporter {
         ImportedAccount account = new ImportedAccount();
         account.uuid = uuid;
 
-        if (overview || accountUuids.contains(uuid)) {
+        if (overview || accountUuids == null || accountUuids.contains(uuid)) {
             int eventType = xpp.next();
             while (!(eventType == XmlPullParser.END_TAG && SettingsExporter.ACCOUNT_ELEMENT.equals(xpp.getName()))) {
                 if (eventType == XmlPullParser.START_TAG) {

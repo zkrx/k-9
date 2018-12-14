@@ -18,6 +18,8 @@ dependencies {
     implementation project(':plugins:HoloColorPicker')
     implementation project(':plugins:openpgp-api-lib:openpgp-api')
 
+    implementation 'com.android.support.constraint:constraint-layout:1.1.3'
+
     implementation "com.android.support:appcompat-v7:${versions.supportLibrary}"
     implementation "com.takisoft.fix:preference-v7:${versions.preferencesFix}"
     implementation "com.takisoft.fix:preference-v7-datetimepicker:${versions.preferencesFix}"

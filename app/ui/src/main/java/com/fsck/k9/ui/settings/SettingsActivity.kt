@@ -75,8 +75,12 @@ class SettingsActivity : K9Activity() {
             for (account in accounts) {
                 add(AccountItem(account))
             }
-            val item = SettingsActionItem(getString(R.string.add_account_action), SettingsAction.ADD_ACCOUNT, R.attr.iconSettingsAccountAdd)
-            add(item)
+            val addAction = SettingsActionItem(getString(R.string.add_account_action), SettingsAction.ADD_ACCOUNT, R.attr.iconSettingsAccountAdd)
+            add(addAction)
+            val importAction = SettingsActionItem(getString(R.string.settings_import), SettingsAction.IMPORT, R.attr.iconSettingsImport)
+            add(importAction)
+            val exportAction = SettingsActionItem(getString(R.string.settings_export_all), SettingsAction.EXPORT, R.attr.iconSettingsExport)
+            add(exportAction)
         }
         accountSection.setHeader(SettingsDividerItem(getString(R.string.accounts_title)))
         settingsAdapter.add(accountSection)

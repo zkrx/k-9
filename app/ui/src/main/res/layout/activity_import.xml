@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/content"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:id="@+id/text_import_title"
+        style="?android:textAppearanceLarge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="16dp"
+        android:text="Import settings"
+        app:layout_constraintBottom_toTopOf="@+id/text_import_info"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.2"
+        app:layout_constraintVertical_chainStyle="packed"
+        />
+
+    <ProgressBar
+        android:id="@+id/progress_import"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/text_import_title"
+        app:layout_constraintBottom_toTopOf="@+id/button_import_import"
+        />
+
+    <TextView
+        android:id="@+id/text_import_info"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:padding="8dp"
+        tools:text="Settings exported on March 20th, 2018"
+        app:layout_constraintBottom_toTopOf="@+id/checkbox_import_general"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/text_import_title"
+        />
+
+    <CheckBox
+        android:id="@+id/checkbox_import_general"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="4dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="4dp"
+        android:text="@string/settings_import_global_settings"
+        android:checked="true"
+        app:layout_constraintBottom_toTopOf="@+id/recycler_import_accounts"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/text_import_info"
+        />
+
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/recycler_import_accounts"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginBottom="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        app:layout_constraintBottom_toTopOf="@+id/button_import_import"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/checkbox_import_general"
+        app:layout_constraintHeight_default="wrap"
+        tools:itemCount="1"
+        tools:listitem="@layout/item_import_account">
+    </android.support.v7.widget.RecyclerView>
+
+    <android.support.v7.widget.AppCompatButton
+        android:id="@+id/button_import_import"
+        style="@style/Widget.AppCompat.Button.Borderless"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Import"
+        app:layout_constraintTop_toBottomOf="@+id/recycler_import_accounts"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.9"
+        />
+
+</android.support.constraint.ConstraintLayout>

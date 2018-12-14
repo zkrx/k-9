@@ -1006,7 +1006,7 @@ Please submit bug reports, contribute new features and ask questions at
     <string name="settings_export_dialog_title">Export</string>
     <string name="settings_import">Import settings</string>
     <string name="settings_import_selection">Import selection</string>
-    <string name="settings_import_global_settings">Global settings</string>
+    <string name="settings_import_global_settings">Import general settings</string>
     <string name="settings_exporting">Exporting settings…</string>
     <string name="settings_importing">Importing settings…</string>
     <string name="settings_import_scanning_file">Scanning file…</string>

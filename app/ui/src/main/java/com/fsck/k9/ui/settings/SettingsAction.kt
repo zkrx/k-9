@@ -3,6 +3,7 @@ package com.fsck.k9.ui.settings
 import android.app.Activity
 import com.fsck.k9.activity.setup.AccountSetupBasics
 import com.fsck.k9.ui.settings.general.GeneralSettingsActivity
+import com.fsck.k9.ui.settings.imports.ImportSettingsActivity
 
 internal enum class SettingsAction {
     GENERAL_SETTINGS {
@@ -11,6 +12,16 @@ internal enum class SettingsAction {
         }
     },
     ADD_ACCOUNT {
+        override fun execute(activity: Activity) {
+            AccountSetupBasics.actionNewAccount(activity)
+        }
+    },
+    IMPORT {
+        override fun execute(activity: Activity) {
+            ImportSettingsActivity.start(activity)
+        }
+    },
+    EXPORT {
         override fun execute(activity: Activity) {
             AccountSetupBasics.actionNewAccount(activity)
         }
