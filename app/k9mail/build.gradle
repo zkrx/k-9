@@ -57,6 +57,11 @@ android {
         release
     }
 
+    // TODO remove once openkeychain is merged
+    dataBinding {
+        enabled true
+    }
+
     buildTypes {
         release {
             if (project.hasProperty('storeFile')) {
