@@ -114,11 +114,9 @@ object K9 : EarlyInit {
     private fun migrateOpenPgpGlobalToAccountSettings() {
         val storage = preferences.storage
 
-        val openPgpProvider = storage.getString("openPgpProvider", null)
         val openPgpSupportSignOnly = storage.getBoolean("openPgpSupportSignOnly", false)
 
         for (account in preferences.accounts) {
-            account.openPgpProvider = openPgpProvider
             account.isOpenPgpHideSignOnly = !openPgpSupportSignOnly
             preferences.saveAccount(account)
         }
