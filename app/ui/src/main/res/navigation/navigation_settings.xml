@@ -74,6 +74,6 @@
 
     <fragment
         android:id="@+id/settingsOpenPgpScreen"
-        android:name="com.fsck.k9.ui.settings.openpgp.SettingsOpenPgpFragment"
+        android:name="com.fsck.k9.ui.settings.openpgp.OpenPgpSettingsFragment"
         android:label="@string/encryption_settings_title"/>
 </navigation>
