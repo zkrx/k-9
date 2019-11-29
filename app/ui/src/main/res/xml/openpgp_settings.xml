@@ -6,7 +6,7 @@
 
     <PreferenceCategory
         android:key="advanced"
-        app:initialExpandedChildrenCount="0">
+        app:initialExpandedChildrenCount="1">
 
         <Preference
             android:key="autocrypt_transfer"
@@ -14,7 +14,7 @@
             android:title="@string/ac_transfer_setting_title" />
 
         <Preference
-            android:key="autocrypt_manage"
+            android:key="openpgp_manage"
             android:summary="@string/ac_manage_setting_summary"
             android:title="@string/ac_manage_setting_title" />
 

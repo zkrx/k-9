@@ -8,7 +8,9 @@ import com.fsck.k9.Account
 import com.fsck.k9.Identity
 import com.fsck.k9.Preferences
 import com.fsck.k9.ui.R
+import com.fsck.k9.ui.endtoend.AutocryptKeyTransferActivity
 import com.fsck.k9.ui.observeNotNull
+import com.fsck.k9.ui.settings.general.GeneralSettingsDataStore
 import com.fsck.k9.ui.withArguments
 import com.takisoft.preferencex.PreferenceCategory
 import com.takisoft.preferencex.PreferenceFragmentCompat
@@ -16,21 +18,43 @@ import com.takisoft.preferencex.SwitchPreferenceCompat
 import com.xwray.groupie.Section
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import org.sufficientlysecure.keychain.ui.MainActivity
 
 class OpenPgpSettingsFragment : PreferenceFragmentCompat() {
     private val preferences: Preferences by inject()
+    private val dataStore: GeneralSettingsDataStore by inject()
 
     private val viewModel: OpenPgpSettingsViewModel by viewModel()
 
     override fun onCreatePreferencesFix(savedInstanceState: Bundle?, rootKey: String?) {
+        preferenceManager.preferenceDataStore = dataStore
         setPreferencesFromResource(R.xml.openpgp_settings, rootKey)
 
         populateIdentitiesList()
+        initPreferenceButtons()
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
         activity?.title = preferenceScreen.title
+        dataStore.activity = activity
+    }
+
+    private fun initPreferenceButtons() {
+        findPreference<Preference>("autocrypt_transfer")!!.setOnPreferenceClickListener {
+            // TODO
+            val intent = AutocryptKeyTransferActivity.createIntent(requireContext(), "XXX")
+            startActivity(intent)
+
+            true
+        }
+
+        findPreference<Preference>("openpgp_manage")!!.setOnPreferenceClickListener {
+            val intent = Intent(context, MainActivity::class.java)
+            startActivity(intent)
+
+            true
+        }
     }
 
     private fun populateIdentitiesList() {
@@ -42,15 +66,15 @@ class OpenPgpSettingsFragment : PreferenceFragmentCompat() {
     }
 
     private fun populateIdentitiesList(accounts: List<Account>) {
-        val dynamicCategory = findPreference<PreferenceCategory>("openpgp_identities")!!
+        val identityCategory = findPreference<PreferenceCategory>("openpgp_identities")!!
 
-        dynamicCategory.removeAll()
+        identityCategory.removeAll()
 
         val accountsSection = Section()
         for (account in accounts) {
             val accountIdentitiesSection = Section().apply {
                 for ((identityIndex, identity) in account.identities.withIndex()) {
-                    addIdentityPreference(account, identityIndex, identity, dynamicCategory)
+                    addIdentityPreference(account, identityIndex, identity, identityCategory)
                 }
             }
             accountsSection.add(accountIdentitiesSection)
@@ -64,18 +88,18 @@ class OpenPgpSettingsFragment : PreferenceFragmentCompat() {
         newPreference.fragment = "unused" // hack to enable separator in com.takisoft.preferencex.SwitchPreferenceCompat
         newPreference.title = identity.email
         newPreference.isChecked = identity.openPgpEnabled
-        newPreference.summaryOff = getString(R.string.settings_openpgp_mode_disabled)
-
-        newPreference.intent = Intent().apply {
-            putExtra("account_uuid", account.uuid)
-            putExtra("identity_index", identityIndex)
-        }
-
         val summaryOn = when {
             identity.openPgpModeMutual -> R.string.settings_openpgp_mode_automatic
             else -> R.string.settings_openpgp_mode_manual
         }
         newPreference.summaryOn = getString(summaryOn)
+        newPreference.summaryOff = getString(R.string.settings_openpgp_mode_disabled)
+        newPreference.isPersistent = false
+
+        newPreference.intent = Intent().apply {
+            putExtra("account_uuid", account.uuid)
+            putExtra("identity_index", identityIndex)
+        }
 
         newPreference.setOnPreferenceChangeListener { preference, newValue ->
             onIdentityChecked(preference, newValue as Boolean)
