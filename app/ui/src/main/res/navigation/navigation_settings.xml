@@ -84,5 +84,11 @@
 
     <fragment
         android:id="@+id/settingsOpenPgpIdentityScreen"
-        android:name="com.fsck.k9.ui.settings.openpgp.OpenPgpSettingsIdentityFragment" />
+        android:name="com.fsck.k9.ui.settings.openpgp.OpenPgpSettingsIdentityFragment"
+        android:label="{email}">
+
+        <argument
+            android:name="email"
+            app:argType="string" />
+    </fragment>
 </navigation>

@@ -37,13 +37,12 @@ class OpenPgpSettingsFragment : PreferenceFragmentCompat() {
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
-        activity?.title = preferenceScreen.title
         dataStore.activity = activity
     }
 
     private fun initPreferenceButtons() {
         findPreference<Preference>("autocrypt_transfer")!!.setOnPreferenceClickListener {
-            // TODO
+            // TODO: implement autocrypt transfer with ALL keys
             val intent = AutocryptKeyTransferActivity.createIntent(requireContext(), "XXX")
             startActivity(intent)
 
@@ -108,16 +107,26 @@ class OpenPgpSettingsFragment : PreferenceFragmentCompat() {
         }
 
         newPreference.setOnPreferenceClickListener { preference ->
-            val arguments = Bundle().apply {
-                putString(OpenPgpSettingsIdentityFragment.ARGUMENT_ACCOUNT_UUID, preference.intent.getStringExtra("account_uuid"))
-                putInt(OpenPgpSettingsIdentityFragment.ARGUMENT_IDENTITY_INDEX, preference.intent.getIntExtra("identity_index", -1))
-            }
-            findNavController().navigate(R.id.action_settingsOpenPgpScreen_to_settingsOpenPgpIdentityScreen, arguments)
-
+            launchIdentitySettings(preference)
             true
         }
 
         preferenceCategory.addPreference(newPreference)
+    }
+
+    private fun launchIdentitySettings(preference: Preference) {
+        val arguments = Bundle().apply {
+            val accountUuid = preference.intent.getStringExtra("account_uuid")
+            val account = preferences.getAccount(accountUuid)
+            val identityIndex = preference.intent.getIntExtra("identity_index", -1)
+            val email = account.identities[identityIndex].email
+
+            putString("email", email)
+            putString(OpenPgpSettingsIdentityFragment.ARGUMENT_ACCOUNT_UUID, accountUuid)
+            putInt(OpenPgpSettingsIdentityFragment.ARGUMENT_IDENTITY_INDEX, identityIndex)
+        }
+        findNavController().navigate(R.id.action_settingsOpenPgpScreen_to_settingsOpenPgpIdentityScreen, arguments)
+
     }
 
     private fun onIdentityChecked(preference: Preference, checked: Boolean) {

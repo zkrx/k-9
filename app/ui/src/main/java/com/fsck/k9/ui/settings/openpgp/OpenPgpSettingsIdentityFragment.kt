@@ -16,36 +16,54 @@ class OpenPgpSettingsIdentityFragment : PreferenceFragmentCompatMasterSwitch() {
 
     lateinit var account: Account
     lateinit var identity: Identity
+    var identityIndex: Int? = null
 
     override fun onCreatePreferencesFix(savedInstanceState: Bundle?, rootKey: String?) {
         setPreferencesFromResource(R.xml.openpgp_identity_settings, rootKey)
 
         val accountUuid = arguments!!.getString(ARGUMENT_ACCOUNT_UUID)
-        val identityIndex = arguments!!.getInt(ARGUMENT_IDENTITY_INDEX)
+        identityIndex = arguments!!.getInt(ARGUMENT_IDENTITY_INDEX)
         account = preferences.getAccount(accountUuid)
-        identity = account.identities[identityIndex]
+        identity = account.identities[identityIndex!!]
 
-        findPreference<Preference>("openpgp_fingerprint")!!.summary = identity.openPgpKey.toString()
+        masterSwitch.isChecked = identity.openPgpEnabled
 
         masterSwitch.onPreferenceChangeListener = OnMasterSwitchChangeListener { newValue ->
             updatePreferences(newValue)
+
+            identity = identity.copy(openPgpEnabled = newValue)
+            saveIdentity()
+            true
+        }
+
+        val openPgpFinerprint = findPreference<Preference>("openpgp_fingerprint")!!
+        openPgpFinerprint.summary = identity.openPgpKey.toString()
+
+        val openPgpMutualMode = findPreference<Preference>("openpgp_mutual_mode")!!
+        openPgpMutualMode.setOnPreferenceChangeListener { preference, newValue ->
+            identity = identity.copy(openPgpModeMutual = newValue as Boolean)
+            saveIdentity()
+
             true
         }
 
         updatePreferences(masterSwitch.isChecked)
     }
 
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
-        activity?.title = identity.email
-    }
-
     private fun updatePreferences(checked: Boolean) {
         findPreference<Preference>("cat_enabled")!!.isVisible = checked
         findPreference<Preference>("cat_disabled")!!.isVisible = !checked
+    }
 
-        val newIdentity = identity.copy(openPgpEnabled = checked)
-        account.identities[arguments!!.getInt(ARGUMENT_IDENTITY_INDEX)] = newIdentity
+    private fun saveIdentity() {
+        val identities = account.identities
+        if (identityIndex == -1) {
+            identities.add(identity)
+        } else {
+            identities.removeAt(identityIndex!!)
+            identities.add(identityIndex!!, identity)
+        }
+
         preferences.saveAccount(account)
     }
 
