@@ -36,8 +36,8 @@ class OpenPgpSettingsIdentityFragment : PreferenceFragmentCompatMasterSwitch() {
             true
         }
 
-        val openPgpFinerprint = findPreference<Preference>("openpgp_fingerprint")!!
-        openPgpFinerprint.summary = identity.openPgpKey.toString()
+        val openPgpFingerprint = findPreference<Preference>("openpgp_fingerprint")!!
+        openPgpFingerprint.summary = identity.openPgpKey.toString()
 
         val openPgpMutualMode = findPreference<Preference>("openpgp_mutual_mode")!!
         openPgpMutualMode.setOnPreferenceChangeListener { preference, newValue ->
@@ -68,7 +68,7 @@ class OpenPgpSettingsIdentityFragment : PreferenceFragmentCompatMasterSwitch() {
     }
 
     companion object {
-        val ARGUMENT_ACCOUNT_UUID = "account_uuid"
-        val ARGUMENT_IDENTITY_INDEX = "identity_index"
+        const val ARGUMENT_ACCOUNT_UUID = "account_uuid"
+        const val ARGUMENT_IDENTITY_INDEX = "identity_index"
     }
 }

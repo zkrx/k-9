@@ -21,6 +21,7 @@ import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.sufficientlysecure.keychain.ui.MainActivity
 
+// TODO: add preferences once and then only update the actual values to prevent flickering
 class OpenPgpSettingsFragment : PreferenceFragmentCompat() {
     private val preferences: Preferences by inject()
     private val dataStore: GeneralSettingsDataStore by inject()
@@ -85,16 +86,15 @@ class OpenPgpSettingsFragment : PreferenceFragmentCompat() {
         val ctx = preferenceManager.context // this is the material styled context
 
         val newPreference = SwitchPreferenceCompat(ctx)
+        newPreference.isPersistent = false
         newPreference.fragment = "unused" // hack to enable separator in com.takisoft.preferencex.SwitchPreferenceCompat
         newPreference.title = identity.email
-        newPreference.isChecked = identity.openPgpEnabled
         val summaryOn = when {
             identity.openPgpModeMutual -> R.string.settings_openpgp_mode_automatic
             else -> R.string.settings_openpgp_mode_manual
         }
         newPreference.summaryOn = getString(summaryOn)
         newPreference.summaryOff = getString(R.string.settings_openpgp_mode_disabled)
-        newPreference.isPersistent = false
 
         newPreference.intent = Intent().apply {
             putExtra("account_uuid", account.uuid)
@@ -112,6 +112,7 @@ class OpenPgpSettingsFragment : PreferenceFragmentCompat() {
         }
 
         preferenceCategory.addPreference(newPreference)
+        newPreference.isChecked = identity.openPgpEnabled
     }
 
     private fun launchIdentitySettings(preference: Preference) {
@@ -126,7 +127,6 @@ class OpenPgpSettingsFragment : PreferenceFragmentCompat() {
             putInt(OpenPgpSettingsIdentityFragment.ARGUMENT_IDENTITY_INDEX, identityIndex)
         }
         findNavController().navigate(R.id.action_settingsOpenPgpScreen_to_settingsOpenPgpIdentityScreen, arguments)
-
     }
 
     private fun onIdentityChecked(preference: Preference, checked: Boolean) {
