@@ -3,6 +3,7 @@ package com.fsck.k9.ui.settings.openpgp
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
+import androidx.navigation.fragment.findNavController
 import androidx.preference.Preference
 import com.fsck.k9.Account
 import com.fsck.k9.Identity
@@ -107,9 +108,11 @@ class OpenPgpSettingsFragment : PreferenceFragmentCompat() {
         }
 
         newPreference.setOnPreferenceClickListener { preference ->
-            Toast.makeText(requireActivity(), "click", Toast.LENGTH_SHORT).show()
-//            val intent = preference.intent
-            // TODO use intent to start activity
+            val arguments = Bundle().apply {
+                putString(OpenPgpSettingsIdentityFragment.ARGUMENT_ACCOUNT_UUID, preference.intent.getStringExtra("account_uuid"))
+                putInt(OpenPgpSettingsIdentityFragment.ARGUMENT_IDENTITY_INDEX, preference.intent.getIntExtra("identity_index", -1))
+            }
+            findNavController().navigate(R.id.action_settingsOpenPgpScreen_to_settingsOpenPgpIdentityScreen, arguments)
 
             true
         }

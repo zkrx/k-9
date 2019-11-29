@@ -2,32 +2,31 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:key="master_switch_key"
-    android:title="MasterSwitch sample">
+    android:title="End-to-end encryption">
 
     <PreferenceCategory android:key="cat_enabled">
-<!--        <ListPreference-->
-<!--            android:dialogTitle="ListPreference shown on the MasterSwitch page"-->
-<!--            android:entries="@array/pref_list_entries"-->
-<!--            android:entryValues="@array/pref_list_values"-->
-<!--            android:key="pref_some_list"-->
-<!--            android:persistent="false"-->
-<!--            android:summary="%s"-->
-<!--            android:title="ListPreference" />-->
-        <Preference android:title="This is shown if the master switch is ON" />
+        <Preference
+            android:layout="@layout/openpgp_identity_setting_header_enabled"
+            android:selectable="false" />
     </PreferenceCategory>
     <PreferenceCategory android:key="cat_disabled">
         <Preference
-            android:shouldDisableView="false"
-            android:title="Enable the master switch to access more settings." />
+            android:layout="@layout/openpgp_identity_setting_header_disabled"
+            android:selectable="false"
+            android:shouldDisableView="false" />
     </PreferenceCategory>
     <PreferenceCategory>
         <Preference
+            android:key="openpgp_fingerprint"
             android:persistent="false"
-            android:title="This is a master switch demo" />
-        <SwitchPreferenceCompat
+            android:title="Key for this address" />
+
+        <com.fsck.k9.ui.settings.account.AutocryptPreferEncryptPreference
+            android:key="openpgp_mutual_mode"
             android:persistent="false"
-            android:summary="Like backup with details"
-            android:title="You can use it for complex settings"
-            app:fragment="com.fsck.k9.ui.settings.openpgp.SettingsOpenPgpIdentityFragment" />
+            android:title="@string/account_settings_crypto_prefer_encrypt"
+            app:summaryOff="@string/switch_off"
+            app:summaryOn="@string/switch_on" />
+        s
     </PreferenceCategory>
 </PreferenceScreen>
