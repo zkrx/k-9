@@ -80,6 +80,10 @@
         <action
             android:id="@+id/action_settingsOpenPgpScreen_to_settingsOpenPgpIdentityScreen"
             app:destination="@id/settingsOpenPgpIdentityScreen" />
+
+        <action
+            android:id="@+id/action_settingsOpenPgpScreen_to_settingsOpenPgpSecretKeyImportScreen"
+            app:destination="@id/settingsOpenPgpSecretKeyImportScreen" />
     </fragment>
 
     <fragment
@@ -91,4 +95,12 @@
             android:name="email"
             app:argType="string" />
     </fragment>
+
+    <!-- FIXME: hardcoded string -->
+    <fragment
+        android:id="@+id/settingsOpenPgpSecretKeyImportScreen"
+        android:name="com.fsck.k9.ui.crypto.keyimport.SecretKeyImportFragment"
+        android:label="Import secret keys">
+    </fragment>
+
 </navigation>

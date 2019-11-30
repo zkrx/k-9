@@ -9,6 +9,7 @@ dependencies {
     implementation project(":app:core")
     implementation project(":app:autodiscovery")
     implementation project(":mail:common")
+    implementation project(":app:crypto-openpgp")
 
     //TODO: Remove AccountSetupIncoming's dependency on these
     compileOnly project(":mail:protocols:imap")

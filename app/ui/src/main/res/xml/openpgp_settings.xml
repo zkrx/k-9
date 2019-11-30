@@ -4,6 +4,11 @@
 
     <PreferenceCategory android:key="openpgp_identities" />
 
+    <Preference
+        android:key="secret_key_import"
+        android:summary="Import secret keys from a file"
+        android:title="Import secret keys" />
+
     <PreferenceCategory
         android:key="advanced"
         app:initialExpandedChildrenCount="1">

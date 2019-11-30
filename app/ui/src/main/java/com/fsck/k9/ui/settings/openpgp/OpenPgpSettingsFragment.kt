@@ -42,6 +42,11 @@ class OpenPgpSettingsFragment : PreferenceFragmentCompat() {
     }
 
     private fun initPreferenceButtons() {
+        findPreference<Preference>("secret_key_import")!!.setOnPreferenceClickListener {
+            findNavController().navigate(R.id.action_settingsOpenPgpScreen_to_settingsOpenPgpSecretKeyImportScreen)
+            true
+        }
+
         findPreference<Preference>("autocrypt_transfer")!!.setOnPreferenceClickListener {
             // TODO: implement autocrypt transfer with ALL keys
             val intent = AutocryptKeyTransferActivity.createIntent(requireContext(), "XXX")
