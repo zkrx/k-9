@@ -19,7 +19,8 @@ class DisplayHtml(private val settings: HtmlSettings) {
     fun cssStyleTheme(): String {
         return if (settings.useDarkMode) {
             "<style type=\"text/css\">" +
-                    "* { background: black ! important; color: #F3F3F3 !important }" +
+                    //"* { background: black ! important; color: #F3F3F3 !important }" +
+                    "* { background: black ! important; color: #F3F3F3 }" +
                     ":link, :link * { color: #CCFF33 !important }" +
                     ":visited, :visited * { color: #551A8B !important }</style> "
         } else {

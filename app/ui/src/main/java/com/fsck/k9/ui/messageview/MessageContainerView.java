@@ -3,6 +3,7 @@ package com.fsck.k9.ui.messageview;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.*;
 
 import android.app.DownloadManager;
 import android.content.ActivityNotFoundException;
@@ -29,6 +30,8 @@ import android.widget.Toast;
 import com.fsck.k9.DI;
 import com.fsck.k9.message.html.DisplayHtml;
 import com.fsck.k9.message.html.DisplayHtmlFactory;
+import com.fsck.k9.message.extractors.BodyTextExtractor;
+import com.fsck.k9.message.SimpleMessageFormat;
 import com.fsck.k9.ui.R;
 import com.fsck.k9.helper.ClipboardManager;
 import com.fsck.k9.helper.Contacts;
@@ -391,6 +394,7 @@ public class MessageContainerView extends LinearLayout implements OnCreateContex
         renderAttachments(messageViewInfo);
 
         String textToDisplay = messageViewInfo.text;
+
         if (textToDisplay != null && !isShowingPictures()) {
             if (Utility.hasExternalImages(textToDisplay)) {
                 if (loadPictures) {
@@ -413,6 +417,8 @@ public class MessageContainerView extends LinearLayout implements OnCreateContex
             }
         };
 
+        System.out.println("====================textToDisplay");
+        System.out.println(textToDisplay);
         displayHtmlContentWithInlineAttachments(
                 textToDisplay, messageViewInfo.attachmentResolver, onPageFinishedListener);
 

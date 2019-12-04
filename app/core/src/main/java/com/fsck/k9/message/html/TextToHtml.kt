@@ -40,8 +40,8 @@ class TextToHtml private constructor(private val text: CharSequence, private val
     internal fun appendHtmlEncoded(ch: Char) {
         when (ch) {
             '&' -> html.append("&amp;")
-            '<' -> html.append("&lt;")
-            '>' -> html.append("&gt;")
+//            '<' -> html.append("&lt;")
+//            '>' -> html.append("&gt;")
             '\r' -> Unit
             '\n' -> html.append(TextToHtml.HTML_NEWLINE)
             else -> html.append(ch)

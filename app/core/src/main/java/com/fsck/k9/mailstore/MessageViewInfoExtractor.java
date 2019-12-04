@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.regex.*;
 
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
@@ -246,6 +247,126 @@ public class MessageViewInfoExtractor {
         }
     }
 
+    // FIXME: move elsewhere above with private methods (if kept in this class)
+    private String parseDiff(String text) {
+        String newText = text;
+
+        // Regexes taken from vim's syntax/diff.vim
+        Pattern diffRemoved1 = Pattern.compile("(?m)^-.*");
+        Pattern diffRemoved2 = Pattern.compile("(?m)^<.*");
+        Pattern diffAdded1 = Pattern.compile("(?m)^\\+.*");
+        Pattern diffAdded2 = Pattern.compile("(?m)^>.*");
+        Pattern diffChanged = Pattern.compile("(?m)^! .*");
+
+        // FIXME: review backslashes and escape sequences
+        // FIXME: what are those line endings that I commented?
+        Pattern diffSubname = Pattern.compile("(?m) @@..*");//ms=s+3 contained
+        Pattern diffLine1 = Pattern.compile("(?m)^@.*");//contains=diffSubname
+        Pattern diffLine2 = Pattern.compile("(?m)^\\<\\d\\+\\>.*");
+        Pattern diffLine3 = Pattern.compile("(?m)^\\*\\*\\*\\*.*");
+        Pattern diffLine4 = Pattern.compile("(?m)^---$");
+
+        // Some versions of diff have lines like "#c#" and "#d#" (where # is a number)
+        Pattern diffLine5 = Pattern.compile("(?m)^\\d\\+\\(,\\d\\+\\)\\=[cda]\\d\\+\\>.*");
+
+        Pattern diffFile1 = Pattern.compile("(?m)^diff\\>.*");
+        Pattern diffFile2 = Pattern.compile("(?m)^\\+\\+\\+ .*");
+        Pattern diffFile3 = Pattern.compile("(?m)^Index: .*");
+        Pattern diffFile4 = Pattern.compile("(?m)^==== .*");
+        Pattern diffOldFile = Pattern.compile("(?m)^\\*\\*\\* .*");
+        Pattern diffNewFile = Pattern.compile("(?m)^--- .*");
+
+        // Used by git
+        Pattern diffIndexLine = Pattern.compile("(?m)^index \\\\x\\\\x\\\\x\\\\x.*");
+
+        Pattern diffComment = Pattern.compile("(?m)^#.*");
+
+        Pattern[] redArray = {diffRemoved1, diffRemoved2};
+        Pattern[] greenArray = {diffAdded1, diffAdded2};
+
+        StringBuffer sb = new StringBuffer();
+        Matcher diffMatches;
+
+        // FIXME: should only work under "diff --git" line or something like this (should not color standard mails)
+        // FIXME: should also work with quoted diffs?
+        // FIXME: color function names and other stuff as well
+        for (Pattern item : redArray) {
+            diffMatches = item.matcher(text);
+
+            while (diffMatches.find()) {
+                diffMatches.appendReplacement(sb, "<span style=\"color:red;\">" + diffMatches.group(0) + "</span>");
+            }
+
+            diffMatches.appendTail(sb);
+            text = sb.toString();
+            sb.delete(0, sb.length());
+        }
+
+        // FIXME: merge this in first loop (2D array?)
+        for (Pattern item : greenArray) {
+            diffMatches = item.matcher(text);
+
+            while (diffMatches.find()) {
+                // FIXME: color should depend on style -> use CSS
+                diffMatches.appendReplacement(sb, "<span style=\"color:lime;\">" + diffMatches.group(0) + "</span>");
+            }
+
+            diffMatches.appendTail(sb);
+            text = sb.toString();
+            sb.delete(0, sb.length());
+        }
+
+        return text;
+
+        /*
+        Matcher diffMatches;
+
+        diffMatches = diffAdded1.matcher(text);
+        while (diffMatches.find()) {
+            System.out.println("###################################################### diffMatches.groupCount(): " + diffMatches.groupCount());
+            System.out.println("diffMatches.start: " + diffMatches.start() + "diffMatches.end(): " + diffMatches.end());
+            text =  text.substring(0, diffMatches.start() - 1) +
+                    "LOL: " +
+                    text.substring(diffMatches.start(), diffMatches.end()) +
+                    " :LAL" +
+                    text.substring(diffMatches.end() + 1);
+        }*/
+/*
+        // Regexes taken from vim's syntax/diff.vim
+        // Use the (?m) inline modifier to apply regexes until end-of-line only
+        String diffRemoved1 = "(?m)^-.*";
+        String diffRemoved2 = "(?m)^<.*";
+        String diffAdded1 = "(?m)^\\+.*";
+        String diffAdded2 = "(?m)^>.*";
+        String diffChanged = "(?m)^! .*";
+
+        // FIXME: review backslashes and escape sequences
+        // FIXME: what are those line endings that I commented?
+        String diffSubname = "(?m) @@..*";//ms=s+3 contained
+        String diffLine1 = "(?m)^@.*";//contains=diffSubname
+        String diffLine2 = "(?m)^\\<\\d\\+\\>.*";
+        String diffLine3 = "(?m)^\\*\\*\\*\\*.*";
+        String diffLine4 = "(?m)^---$";
+
+        // Some versions of diff have lines like "#c#" and "#d#" (where # is a number)
+        String diffLine5 = "(?m)^\\d\\+\\(,\\d\\+\\)\\=[cda]\\d\\+\\>.*";
+
+        String diffFile1 = "(?m)^diff\\>.*";
+        String diffFile2 = "(?m)^\\+\\+\\+ .*";
+        String diffFile3 = "(?m)^Index: .*";
+        String diffFile4 = "(?m)^==== .*";
+        String diffOldFile = "(?m)^\\*\\*\\* .*";
+        String diffNewFile = "(?m)^--- .*";
+
+        // Used by git
+        String diffIndexLine = "(?m)^index \\\\x\\\\x\\\\x\\\\x.*";
+
+        String diffComment = "(?m)^#.*";
+
+        return text.replaceAll(diffAdded1, "LOL!");
+        */
+    }
+
     /**
      * Use the contents of a {@link com.fsck.k9.mail.internet.Viewable} to create the HTML to be displayed.
      *
@@ -276,6 +397,13 @@ public class MessageViewInfoExtractor {
                 t = FlowedMessageUtils.deflow(t, delSp);
                 t = HtmlConverter.textToHtml(t);
             } else if (viewable instanceof Text) {
+                // FIXME: parseDiff should be part of another class? Static? OO stuff
+                System.out.println("###################################### parseDiff BEFORE");
+                System.out.println(t);
+                t = parseDiff(t);
+                System.out.println("###################################### parseDiff AFTER");
+                System.out.println(t);
+
                 t = HtmlConverter.textToHtml(t);
             } else if (!(viewable instanceof Html)) {
                 throw new IllegalStateException("unhandled case!");
